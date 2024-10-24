@@ -1,6 +1,6 @@
 # Stock analysis
 
-The purpose of the project is to provide technical analysis and stock price predictions.
+The purpose of the project is to provide insights into the stock market. The vision is to develop a web-based dashboard that highlights various buy and sell signals, combining predictions with technical analysis.
 
 # Features
 
@@ -19,8 +19,7 @@ the prediction part.
 
 # Datasets
 
-The main data source is the kagglehub "sp-500-stocks" dataset,
-a dataset which figures are updated daily. The data extends 24 years of daily history:
+The primary data source is the Kaggle hub 'SP 500 Stocks' dataset, which is updated daily. The dataset contains 24 years of daily historical data.
 
 | Date       | Symbol | Adj Close  | Close      | High       | Low        | Open       | Volume    |
 | ---------- | ------ | ---------- | ---------- | ---------- | ---------- | ---------- | --------- |
@@ -30,7 +29,7 @@ a dataset which figures are updated daily. The data extends 24 years of daily hi
 | 2024-10-22 | ZTS    | 189.509995 | 189.509995 | 189.820007 | 187.220001 | 188.410004 | 1441900.0 |
 | 2024-10-23 | ZTS    | 188.990005 | 188.990005 | 189.979996 | 187.559998 | 189.399994 | 1339482.0 |
 
-To additional helper datasets are used to supply detailed companyinformation (not visualized here) and index pricing history.
+Two additional auxiliary datasets are used to provide detailed company information (not visualized here) and index pricing history.
 
 | Date       | S&P500  |
 | ---------- | ------- |
@@ -42,7 +41,4 @@ To additional helper datasets are used to supply detailed companyinformation (no
 
 # Method
 
-Prediction is performed using the LSTM (long short-term memory) neural network model which is a prefered
-measure for prediction from time series.
-
-Training is taking place every 24-hour to take into consideration the latest developments.
+Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Training occurs every 24 hours to incorporate the latest developments.
