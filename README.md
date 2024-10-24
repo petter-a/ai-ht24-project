@@ -18,7 +18,7 @@ The purpose of the project is to provide technical analysis and stock price pred
 The main data source is the kagglehub "sp-500-stocks" dataset,
 a dataset which figures are updated daily. The data extends 24 years of daily history:
 
-| Date       | Symbol | Adj Close  | Close      | High       | Low Open   | Volume     |
+| Date       | Symbol | Adj Close  | Close      | High       | Low        | Open       | Volume    |
 | ---------- | ------ | ---------- | ---------- | ---------- | ---------- | ---------- | --------- |
 | 2024-10-17 | ZTS    | 191.000000 | 191.000000 | 196.550003 | 190.889999 | 195.710007 | 1701200.0 |
 | 2024-10-18 | ZTS    | 193.279999 | 193.279999 | 193.490005 | 190.500000 | 191.160004 | 1576400.0 |
