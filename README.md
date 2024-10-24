@@ -4,12 +4,16 @@ The purpose of the project is to provide technical analysis and stock price pred
 
 # Features
 
+Not all features might be made available at project completion date. Much focus will be spent on
+the prediction part.
+
     * Stock statistics and price development for all stocks in the US S&P500 index.
     * Time period filtering
     * Stock price prediction
     * Basic technical analysis (Stock/Sectors/Index)
         * SMA
         * EMA
+    * Trending based on prediction
     * Top 10 stocks/sectors based on value increase over time
     * Buy/Sell signals
 
@@ -38,5 +42,7 @@ To additional helper datasets are used to supply detailed companyinformation (no
 
 # Method
 
-Prediction is performed using the LSTM (long short-term memory) neural network model.
-The dataset is updated every 24h with new predictions.
+Prediction is performed using the LSTM (long short-term memory) neural network model which is a prefered
+measure for prediction from time series.
+
+Training is taking place every 24-hour to take into consideration the latest developments.
