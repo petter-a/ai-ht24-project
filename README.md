@@ -1,6 +1,6 @@
 # Stock analysis
 
-The purpose of the project is to provide insights into the stock market. The vision is to develop a web-based dashboard that highlights various buy and sell signals, combining predictions with technical analysis
+The purpose of the project is to provide insights into the stock market. The long term vision is to develop a web-based dashboard that highlights various buy and sell signals, combining predictions with technical analysis
 to build a virtual portfolio with risk and value weigthed stocks.
 
 # Features
