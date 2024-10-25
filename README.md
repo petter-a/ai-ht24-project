@@ -1,6 +1,7 @@
 # Stock analysis
 
-The purpose of the project is to provide insights into the stock market. The vision is to develop a web-based dashboard that highlights various buy and sell signals, combining predictions with technical analysis.
+The purpose of the project is to provide insights into the stock market. The vision is to develop a web-based dashboard that highlights various buy and sell signals, combining predictions with technical analysis
+to build a virtual portfolio with risk and value weigthed stocks.
 
 # Features
 
@@ -15,6 +16,7 @@ the prediction part.
         * EMA (Exponential moving average)
         * RSI (Relative strength index)
     * Trending based on prediction
+    * Risk
     * Top 10 stocks/sectors based on value increase over time
     * Buy/Sell signals
 
@@ -43,3 +45,22 @@ Two additional auxiliary datasets are used to provide detailed company informati
 # Method
 
 Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained quite frequently.
+Initially based on a single feature (Closing price) but eventually more features like volume and volatility or other external data
+that I can find that might stregthen the prognosis. Some examples might include exchange rates.
+
+# Challenges
+
+The main challenge is to interpret and define thresholds for all parameters involved in the process.
+For example what constitutes a "buy signal"? How to combine technical analysis (which in nature is statistical)
+with predictions based on machine learning and what conclusions could one draw from it?
+It is also a challenge to collect datasets with aligning time series in a consisten manner.
+In the long run, various API's and static downloads needs to be combined using adapters to produce intermediate
+datasets that can be combined efficiently.
+
+These challenges will be adressed during the implementation phase.
+
+# Scope of project
+
+The planned deliverable for the project scope is a program that allows the user to choose a particular stock
+from the S&P 500 index and retreive an analysis of the historical data and future predictions together with recommendations
+given predefined thresholds.
