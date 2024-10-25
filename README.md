@@ -11,8 +11,9 @@ the prediction part.
     * Time period filtering
     * Stock price prediction
     * Basic technical analysis (Stock/Sectors/Index)
-        * SMA
-        * EMA
+        * SMA (Simple moving average)
+        * EMA (Exponential moving average)
+        * RSI (Relative strength index)
     * Trending based on prediction
     * Top 10 stocks/sectors based on value increase over time
     * Buy/Sell signals
@@ -41,4 +42,4 @@ Two additional auxiliary datasets are used to provide detailed company informati
 
 # Method
 
-Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Training occurs every 24 hours to incorporate the latest developments.
+Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained quite frequently.
