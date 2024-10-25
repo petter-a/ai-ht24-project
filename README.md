@@ -46,7 +46,8 @@ Two additional auxiliary datasets are used to provide detailed company informati
 
 Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained quite frequently.
 Initially based on a single feature (Closing price) but eventually more features like volume and volatility or other external data
-that I can find that might stregthen the prognosis. Some examples might include exchange rates.
+that I can find that might strengthen the prognosis. An example is the SEK/USD exchange rates (which is available as download through
+[Riksbanken](https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/search-interest-rates-and-exchange-rates/)).
 
 # Challenges
 
