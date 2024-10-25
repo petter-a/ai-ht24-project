@@ -19,7 +19,7 @@ the prediction part.
 
 # Datasets
 
-The primary data source is the Kaggle hub 'SP 500 Stocks' dataset, which is updated daily. The dataset contains 24 years of daily historical data.
+The primary data source is the [S&P 500 Stocks dataset](https://www.kaggle.com/datasets/andrewmvd/sp-500-stocks) available on Kaggle, which is updated daily. The dataset contains 14 years of daily historical data.
 
 | Date       | Symbol | Adj Close  | Close      | High       | Low        | Open       | Volume    |
 | ---------- | ------ | ---------- | ---------- | ---------- | ---------- | ---------- | --------- |
