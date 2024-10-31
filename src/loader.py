@@ -4,9 +4,9 @@ from stock import Stock
 
 class Loader:
     def __init__(self):
-        '''
-        Download datasets from kagglehub (Updated daily)
-        '''
+        # ====================================================
+        # Download datasets from kagglehub (Updated daily)
+        # ====================================================
         path = kagglehub.dataset_download("andrewmvd/sp-500-stocks")
 
         self.companies = pd.read_csv(f'{path}/sp500_companies.csv', index_col="Symbol")
@@ -40,7 +40,7 @@ class Loader:
         for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
-            data[column] = data[column].fillna(method='bfill')
+            data[column] = data[column].bfill()
         return data
 
     def get_stock(self, symbol: str) -> Stock:

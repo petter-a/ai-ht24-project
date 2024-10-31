@@ -9,6 +9,7 @@ from keras.models import Sequential
 from keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector
+from tensorflow.keras.losses import MeanAbsoluteError
 
 import matplotlib.pyplot as plt
 
@@ -49,7 +50,7 @@ class StockModel:
         # ====================================================
         self.steps = steps      # The historically observed datapoints (days)
         self.horizon = horizon  # The number of future datapoints (days) to predict
-        self.learning_rate = 0.01 # The learning rate of the model
+        self.learning_rate = 0.001 # The learning rate of the model
         self.epocs = 100
         self.batchsize = 26
         self.units = 64
@@ -171,7 +172,7 @@ class StockModel:
             TimeDistributed(Dense(features))
         ])
         model.compile(optimizer=Adam(learning_rate=self.learning_rate), 
-            loss='mae', 
+            loss=MeanAbsoluteError(), 
             metrics=[
                 'mse',
                 metric_rmse_for_feature,
@@ -181,22 +182,9 @@ class StockModel:
         return model
    
     def create_sequences(self, data: np.array) -> tuple[np.array, np.array]:
-
-        '''
-        Creates a dataset fit for LSTM
-        ===========================================
-        step is the number of days to include in a 
-        sequence. 
-        self.create_sequences([1,2,3,4,5,6,7,8,9],3)
-
-        (array(
-        [[1, 2, 3],
-        [2, 3, 4],
-        [3, 4, 5],
-        [4, 5, 6],
-        [5, 6, 7]]), 
-        array([4, 5, 6, 7, 8]))
-        '''
+        # ====================================================
+        # Timeseries fit for LSTM
+        # ====================================================
         x, y = [], []
 
         for i in range(len(data) - self.steps - self.horizon +1):
@@ -248,48 +236,6 @@ class StockModel:
         ax.legend()
 
         plt.show()
-
-        '''
-        (_, axs) = plt.subplots(3, 3, figsize=(20, 10), layout='constrained')
-        axs[0][0].set_title("Root Mean Square Error (Close)")
-        axs[0][0].plot(results.epoch, results.history['metric_rmse_for_feature'], label=f'RMSE: {np.mean(results.history['metric_rmse_for_feature'])}')
-        axs[0][0].legend()
-
-        axs[0][1].set_title("Mean Square Error")
-        axs[0][1].plot(results.epoch, results.history['metric_mse_for_feature'], label=f'Close: {np.mean(results.history['metric_mse_for_feature'])}')
-        axs[0][1].plot(results.epoch, results.history['mse'], label=f'Train: {np.mean(results.history['mse'])}')
-        axs[0][1].plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.mean(results.history['val_mse'])}')
-        axs[0][1].legend()
-
-        axs[0][2].set_title("Symmetric Mean Absolute Percentage Error")
-        axs[0][2].plot(results.epoch, results.history['metric_smape'], label=f'sMAPE Train: {np.mean(results.history['metric_smape'])}')
-        axs[0][2].plot(results.epoch, results.history['val_metric_smape'], label=f'sMAPE Validation: {np.mean(results.history['val_metric_smape'])}')
-        axs[0][2].legend()
-
-        axs[1][0].set_title("Coefficient of Determination")
-        axs[1][0].plot(results.epoch, results.history['metric_r2score'], label=f'R2 Train: {np.mean(results.history['metric_r2score'])}')
-        axs[1][0].plot(results.epoch, results.history['val_metric_r2score'], label=f'R2 Validation: {np.mean(results.history['val_metric_r2score'])}')
-        axs[1][0].legend()
-
-        axs[1][1].set_title("Loss")
-        axs[1][1].plot(results.epoch, results.history['loss'], label=f'Train: {np.mean(results.history['loss'])}')
-        axs[1][1].plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.mean(results.history['val_loss'])}')
-        axs[1][1].legend()
-        
-        axs[1][1].set_title("Mean Square Error")
-        axs[1][1].plot(results.epoch, results.history['val_mse'], label=f'Mean square error (Val)')
-        axs[1][1].legend()
-        axs[1][2].set_title("Mean Absolute Error")
-        axs[1][2].plot(results.epoch, results.history['val_mae'], label=f'Mean absolute error (Val)')
-        axs[1][2].legend()
-        axs[2][0].set_title("Mean Absolute Percentage Error")
-        axs[2][0].plot(results.epoch, results.history['val_mape'], label="Mean absolute percentage error (Val)")
-        axs[2][0].legend()
-
-        axs[2][1].plot(test, label="True Values")
-        axs[2][1].plot(predictions, label="Predictions")
-        axs[2][1].legend()
-        '''
 
     def predict(self) -> pd.DataFrame:
         # ===========================================
