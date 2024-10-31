@@ -10,7 +10,7 @@ from keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector, Conv1D, BatchNormalization
 from tensorflow.keras.losses import MeanAbsoluteError
-
+import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
 # Algorithm for calculating Root Mean Square Error for a single feature
@@ -52,8 +52,8 @@ class StockModel:
         self.horizon = horizon  # The number of future datapoints (days) to predict
         self.learning_rate = 0.001 # The learning rate of the model
         self.epocs = 100
-        self.batchsize = 26
-        self.units = 64
+        self.batchsize = 64
+        self.units = 50
         self.name = frame.values[0][0] # The unique name of the symbol
 
         # ====================================================
@@ -79,7 +79,8 @@ class StockModel:
         # prediction (The "label"). All 5 features will be 
         # used in the trining.
         self.dataset = frame[[
-            'Close', 
+            'Close',
+            'Adj Close', 
             'Open', 
             'High', 
             'Low', 
@@ -195,15 +196,18 @@ class StockModel:
         return np.array(x), np.array(y)
 
     def plot_metrics(self, results: any, predictions: pd.array, validation: pd.array):
-        predictions = predictions[:, -1, 0]
-        test = validation[:, -1, 0]
+        predictions_close = predictions[:, -1, 0]
+        validation_close = validation[:, -1, 0]
 
         fig = plt.figure(figsize=(20, 10), layout="constrained")
         spec = fig.add_gridspec(3, 3)
 
         ax = fig.add_subplot(spec[0, :])
-        ax.plot(test, label="True Values")
-        ax.plot(predictions, label="Predictions")
+        ax.plot(validation_close, label="True Values")
+        ax.plot(predictions_close, label="Predictions")
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(100))
+        ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
+        ax.grid(True)
         ax.legend()
 
         ax = fig.add_subplot(spec[1, 0])

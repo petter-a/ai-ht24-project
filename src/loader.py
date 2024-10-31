@@ -9,9 +9,14 @@ class Loader:
         # ====================================================
         path = kagglehub.dataset_download("andrewmvd/sp-500-stocks")
 
-        self.companies = pd.read_csv(f'{path}/sp500_companies.csv', index_col="Symbol")
-        self.stocks = pd.read_csv(f'{path}/sp500_stocks.csv', index_col="Date", parse_dates=["Date"])
-        self.index = pd.read_csv(f'{path}/sp500_index.csv', index_col="Date", parse_dates=["Date"])
+        self.companies = pd.read_csv(f'{path}/sp500_companies.csv', 
+            index_col="Symbol")
+        
+        self.stocks = pd.read_csv(f'{path}/sp500_stocks.csv', 
+            index_col="Date", parse_dates=["Date"])
+        
+        self.index = pd.read_csv(f'{path}/sp500_index.csv', 
+            index_col="Date", parse_dates=["Date"])
 
     def get_company_info(self, symbol: str) -> pd.DataFrame:
         return self.companies[self.companies.index == symbol]
