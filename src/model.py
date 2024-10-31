@@ -8,7 +8,7 @@ from keras import Input
 from keras.models import Sequential
 from keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector
+from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector, Conv1D, BatchNormalization
 from tensorflow.keras.losses import MeanAbsoluteError
 
 import matplotlib.pyplot as plt
@@ -88,13 +88,16 @@ class StockModel:
             'EMA_high', 'EMA_low'
             ]]
         
+        self.features = len(self.dataset.columns)
+        
     def train_model(self) -> Sequential:
         # ====================================================
         # Fit the transform to training data 
         # ====================================================
         # The frame will be flattened but the shape will still 
         # be (samples, features)
-        scaled_dataset = self.scaler.fit_transform(self.dataset)
+        scaled_dataset = self.scaler.fit_transform(
+            self.dataset)
         
         # ====================================================
         # Create timeseries for training 
@@ -102,7 +105,8 @@ class StockModel:
         # The shape of the return values constitutes:
         # x: (samples, timesteps, feature_count)
         # y: (samples, horizon, feature_count)       
-        x, y = self.create_sequences(scaled_dataset)
+        x, y = self.create_sequences(
+            scaled_dataset)
 
         # ====================================================
         # Split data between training and validation data
@@ -114,16 +118,37 @@ class StockModel:
         y_train, y_val = y[:size], y[size:]
 
         # ====================================================
+        # Create pipeline
+        # ====================================================
+        self.model = Sequential([
+            Input(shape=(self.steps, self.features)),
+            LSTM(self.units, activation='relu', return_sequences=True),
+            Dropout(0.2),
+            LSTM(self.units, activation='relu', return_sequences=False),
+            Dropout(0.2),
+            RepeatVector(self.horizon),
+            LSTM(self.units, activation='relu', return_sequences=True),
+            Dropout(0.2),
+            TimeDistributed(Dense(self.features))
+        ])
+        # ====================================================
         # Compile model
         # ====================================================
-        self.model = self.create_model()
-        
+        self.model.compile(optimizer=Adam(learning_rate=self.learning_rate), 
+            loss=MeanAbsoluteError(), 
+            metrics=[
+                'mse',
+                metric_rmse_for_feature,
+                metric_mse_for_feature,
+                metric_smape,
+                metric_r2score])
+    
         # ====================================================
         # Create stopping function to avoid overfitting
         # ====================================================
         early_stopping = EarlyStopping(
             monitor='val_loss', 
-            patience=10, 
+            patience=5, 
             restore_best_weights=True)
 
         # ====================================================
@@ -157,30 +182,6 @@ class StockModel:
             rescaled_validation)
         return self.model
 
-    def create_model(self) -> Sequential:
-        features = len(self.dataset.columns)
-
-        model = Sequential([
-            Input(shape=(self.steps, features)),
-            LSTM(self.units, activation='relu', return_sequences=True),
-            Dropout(0.2),
-            LSTM(self.units, activation='relu', return_sequences=False),
-            Dropout(0.2),
-            RepeatVector(self.horizon),
-            LSTM(self.units, activation='relu', return_sequences=True),
-            Dropout(0.2),
-            TimeDistributed(Dense(features))
-        ])
-        model.compile(optimizer=Adam(learning_rate=self.learning_rate), 
-            loss=MeanAbsoluteError(), 
-            metrics=[
-                'mse',
-                metric_rmse_for_feature,
-                metric_mse_for_feature,
-                metric_smape,
-                metric_r2score])
-        return model
-   
     def create_sequences(self, data: np.array) -> tuple[np.array, np.array]:
         # ====================================================
         # Timeseries fit for LSTM
@@ -251,7 +252,7 @@ class StockModel:
         reshaped_dataset = scaled_dataset.reshape(
             -1, 
             self.steps ,
-            len(self.dataset.columns))
+            self.features)
         
         # ===========================================
         # Perform prediction
