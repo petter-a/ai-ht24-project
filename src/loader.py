@@ -31,10 +31,10 @@ class Loader:
         # Create the technical indicators
         # =========================================== 
         data['SMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=5).mean())
+            lambda x: x.rolling(window=50).mean())
         
         data['SMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=10).mean())
+            lambda x: x.rolling(window=200).mean())
         
         data['EMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
             lambda x: x.ewm(span=12, adjust=False).mean())
@@ -45,7 +45,7 @@ class Loader:
         for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
-            data[column] = data.groupby('Symbol')['Adj Close'].bfill()
+            data[column] = data.groupby('Symbol')[column].bfill()
         return data
 
     def get_stock_data(self, symbol: str) -> pd.DataFrame:
