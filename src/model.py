@@ -8,24 +8,10 @@ from keras import Input
 from keras.models import Sequential
 from keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector, Conv1D, BatchNormalization
+from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector
 from tensorflow.keras.losses import MeanAbsoluteError
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
-
-# Algorithm for calculating Root Mean Square Error for a single feature
-@keras.saving.register_keras_serializable()
-def metric_rmse_for_feature(y_true, y_pred):
-    return tf.sqrt(metric_mse_for_feature(y_true, y_pred))
-
-# Algorithm for calculating Mean Square Error for a single feature
-@keras.saving.register_keras_serializable()
-def metric_mse_for_feature(y_true, y_pred):
-    y_true_feature = y_true[:, :, 0]
-    y_pred_feature = y_pred[:, :, 0]
-    
-    mse = tf.reduce_mean(tf.square(y_true_feature - y_pred_feature))
-    return mse
 
 # Algorithm for calculating Symmetric Mean Absolute Percentage Error
 @keras.saving.register_keras_serializable()
@@ -44,12 +30,12 @@ def metric_r2score(y_true, y_pred):
 
 class StockModel:
 
-    def __init__(self, frame: pd.DataFrame, steps: int = 30, horizon: int = 10):
+    def __init__(self, frame: pd.DataFrame):
         # ====================================================
         # Configuration
         # ====================================================
-        self.steps = steps      # The historically observed datapoints (days)
-        self.horizon = horizon  # The number of future datapoints (days) to predict
+        self.steps = 30         # The historically observed datapoints (days)
+        self.horizon = 10       # The number of future datapoints (days) to predict
         self.learning_rate = 0.001 # The learning rate of the model
         self.epocs = 100
         self.batchsize = 64
@@ -69,7 +55,8 @@ class StockModel:
         # together with the model as it needs to be configured
         # with the training data. If the model is loaded from
         # file. The scaling needs to be restored separately.
-        self.scaler = MinMaxScaler(feature_range=(0, 1))
+        self.scaler = MinMaxScaler(
+            feature_range=(0, 1))
         
         # ====================================================
         # Extract fetures to train the model with
@@ -79,8 +66,8 @@ class StockModel:
         # prediction (The "label"). All 5 features will be 
         # used in the trining.
         self.dataset = frame[[
-            'Close',
             'Adj Close', 
+            'Close',
             'Open', 
             'High', 
             'Low', 
@@ -139,8 +126,6 @@ class StockModel:
             loss=MeanAbsoluteError(), 
             metrics=[
                 'mse',
-                metric_rmse_for_feature,
-                metric_mse_for_feature,
                 metric_smape,
                 metric_r2score])
     
@@ -212,32 +197,32 @@ class StockModel:
 
         ax = fig.add_subplot(spec[1, 0])
         ax.set_title("Loss")
-        ax.plot(results.epoch, results.history['loss'], label=f'Train: {np.mean(results.history['loss'])}')
-        ax.plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.mean(results.history['val_loss'])}')
+        ax.plot(results.epoch, results.history['loss'], label=f'Train: {np.sum(results.history['loss']):.4f}')
+        ax.plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.sum(results.history['val_loss']):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[1, 1])
-        ax.set_title("Root Mean Square Error (Close)")
-        ax.plot(results.epoch, results.history['metric_rmse_for_feature'], label=f'RMSE: {np.mean(results.history['metric_rmse_for_feature'])}')
+        ax.set_title("Root Mean Square Error")
+        ax.plot(results.epoch, tf.sqrt(results.history['mse']), label=f'Train: {np.sum(tf.sqrt(results.history['mse'])):.4f}')
+        ax.plot(results.epoch, tf.sqrt(results.history['val_mse']), label=f'Validation: {np.sum(tf.sqrt(results.history['val_mse'])):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[1, 2])
         ax.set_title("Mean Square Error")
-        ax.plot(results.epoch, results.history['metric_mse_for_feature'], label=f'Close: {np.mean(results.history['metric_mse_for_feature'])}')
-        ax.plot(results.epoch, results.history['mse'], label=f'Train: {np.mean(results.history['mse'])}')
-        ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.mean(results.history['val_mse'])}')
+        ax.plot(results.epoch, results.history['mse'], label=f'Train: {np.sum(results.history['mse']):.4f}')
+        ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.sum(results.history['val_mse']):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[2, 0])
         ax.set_title("Symmetric Mean Absolute Percentage Error")
-        ax.plot(results.epoch, results.history['metric_smape'], label=f'sMAPE Train: {np.mean(results.history['metric_smape'])}')
-        ax.plot(results.epoch, results.history['val_metric_smape'], label=f'sMAPE Validation: {np.mean(results.history['val_metric_smape'])}')
+        ax.plot(results.epoch, results.history['metric_smape'], label=f'Train: {np.sum(results.history['metric_smape']):.4f}')
+        ax.plot(results.epoch, results.history['val_metric_smape'], label=f'Validation: {np.sum(results.history['val_metric_smape']):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[2, 1])
         ax.set_title("Coefficient of Determination")
-        ax.plot(results.epoch, results.history['metric_r2score'], label=f'R2 Train: {np.mean(results.history['metric_r2score'])}')
-        ax.plot(results.epoch, results.history['val_metric_r2score'], label=f'R2 Validation: {np.mean(results.history['val_metric_r2score'])}')
+        ax.plot(results.epoch, results.history['metric_r2score'], label=f'Train: {np.sum(results.history['metric_r2score']):.4f}')
+        ax.plot(results.epoch, results.history['val_metric_r2score'], label=f'Validation: {np.sum(results.history['val_metric_r2score']):.4f}')
         ax.legend()
 
         plt.show()
@@ -247,7 +232,8 @@ class StockModel:
         # Scale to fit 0 - 1
         # ===========================================
         # Extract the last N days from the most recent dataset
-        scaled_dataset = self.scaler.transform(self.dataset[-self.steps:])
+        scaled_dataset = self.scaler.transform(
+            self.dataset[-self.steps:])
 
         # ===========================================
         # Reshape scaled data
@@ -283,16 +269,9 @@ class StockModel:
         # the first day of prediction
         index = pd.date_range(self.dataset.index[-1], periods=len(inverse)+1)[1:]
         # Populate Dataframe
-        frame = pd.DataFrame({
-            'Date': index,
-            'Close': inverse[:,0],
-            'Open': inverse[:,1],
-            'High': inverse[:,2],
-            'Low': inverse[:,3],
-            'Volume':inverse[:,4],
-        })
+        frame = pd.DataFrame(inverse[:,:], columns=self.dataset.columns)
         # Set index 
-        return frame.set_index("Date")
+        return frame.set_index(index)
 
     def fromFile(self):
         self.model = keras.saving.load_model(f'../models/{self.name}.keras')
