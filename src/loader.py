@@ -12,41 +12,47 @@ class Loader:
         self.companies = pd.read_csv(f'{path}/sp500_companies.csv', 
             index_col="Symbol")
         
-        self.stocks = pd.read_csv(f'{path}/sp500_stocks.csv', 
-            index_col="Date", parse_dates=["Date"])
-        
+        self.stocks = self.refine_stock_data(
+            pd.read_csv(f'{path}/sp500_stocks.csv', index_col="Date", parse_dates=["Date"])
+        )
         self.index = pd.read_csv(f'{path}/sp500_index.csv', 
             index_col="Date", parse_dates=["Date"])
 
     def get_company_info(self, symbol: str) -> pd.DataFrame:
         return self.companies[self.companies.index == symbol]
-    
-    def get_stock_data(self, symbol: str) -> pd.DataFrame:
+
+    def refine_stock_data(self, data: pd.DataFrame) -> pd.DataFrame:
         # ===========================================
         # Make sure data is sorted by Date
         # =========================================== 
-        data = self.stocks[self.stocks['Symbol'] == symbol].sort_index()
+        data = data.sort_index()
         
         # ===========================================
         # Create the technical indicators
         # =========================================== 
-        data['SMA_low'] = data['Close'].transform(
+        data['SMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
             lambda x: x.rolling(window=5).mean())
         
-        data['SMA_high'] = data['Close'].transform(
+        data['SMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
             lambda x: x.rolling(window=10).mean())
         
-        data['EMA_low'] = data['Close'].transform(
+        data['EMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
             lambda x: x.ewm(span=12, adjust=False).mean())
 
-        data['EMA_high'] = data['Close'].transform(
+        data['EMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
             lambda x: x.ewm(span=26, adjust=False).mean())
         
         for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
-            data[column] = data[column].bfill()
+            data[column] = data.groupby('Symbol')['Adj Close'].bfill()
         return data
 
+    def get_stock_data(self, symbol: str) -> pd.DataFrame:
+        # ===========================================
+        # Make sure data is sorted by Date
+        # =========================================== 
+        return self.stocks[self.stocks['Symbol'] == symbol]
+        
     def get_stock(self, symbol: str) -> Stock:
         return Stock(self.get_company_info(symbol), self.get_stock_data(symbol))
