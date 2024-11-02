@@ -40,6 +40,7 @@ class StockModel:
         self.epocs = 100
         self.batchsize = 64
         self.units = 50
+        self.patience = 4
         self.name = frame.values[0][0] # The unique name of the symbol
 
         # ====================================================
@@ -67,10 +68,6 @@ class StockModel:
         # used in the trining.
         self.dataset = frame[[
             'Adj Close', 
-            'Close',
-            'Open', 
-            'High', 
-            'Low', 
             'Volume', 
             'SMA_high', 'SMA_low',
             'EMA_high', 'EMA_low'
@@ -134,7 +131,7 @@ class StockModel:
         # ====================================================
         early_stopping = EarlyStopping(
             monitor='val_loss', 
-            patience=5, 
+            patience=self.patience, 
             restore_best_weights=True)
 
         # ====================================================
