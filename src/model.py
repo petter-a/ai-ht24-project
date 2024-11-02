@@ -38,7 +38,7 @@ class StockModel:
         self.horizon = 10       # The number of future datapoints (days) to predict
         self.learning_rate = 0.001 # The learning rate of the model
         self.epocs = 100
-        self.batchsize = 64
+        self.batchsize = 32
         self.units = 50
         self.patience = 4
         self.name = frame.values[0][0] # The unique name of the symbol
@@ -110,9 +110,7 @@ class StockModel:
         # ====================================================
         self.model = Sequential([
             Input(shape=(self.steps, self.features)),
-            LSTM(self.units, activation='relu', return_sequences=True),
-            Dropout(0.2),
-            LSTM(self.units, activation='relu', return_sequences=False),
+            LSTM(self.units, activation='relu'),
             Dropout(0.2),
             RepeatVector(self.horizon),
             LSTM(self.units, activation='relu', return_sequences=True),
@@ -175,8 +173,8 @@ class StockModel:
         x, y = [], []
 
         for i in range(len(data) - self.steps - self.horizon +1):
-            x.append(data[i:i + self.steps])
-            y.append(data[i + self.steps: i + self.steps + self.horizon])
+            x.append(data[i:(i + self.steps)])
+            y.append(data[(i + self.steps):(i + self.steps + self.horizon)])
 
         return np.array(x), np.array(y)
 
