@@ -38,7 +38,7 @@ class Plot:
         self.axs[0].plot(prices, color='green', label='Price')
 
     def plot_stock_prediction(self):
-        prices = self.stock.get_predicted_price()['Close']
+        prices = self.stock.get_predicted_price()['Adj Close']
         self.axs[0].plot(prices, color='grey', label='Predicted Price')
 
     def plot_max_price(self):
