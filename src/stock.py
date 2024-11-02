@@ -9,7 +9,6 @@ class Stock:
     def __init__(self, company: pd.DataFrame, data: pd.DataFrame):
         self.company = company
         self.data = data
-        self.close = 'Close'
 
     def get_company_name(self) -> str:
         return to_str(self.company, 'Shortname')
@@ -33,10 +32,10 @@ class Stock:
         return result
 
     def get_average_price(self, range: DateRange = None) -> pd.Float64Dtype:
-        return np.average(self.get_data_range(self.data, range)[self.close])
+        return np.average(self.get_data_range(self.data, range)['Adj Close'])
     
     def get_price(self, range: DateRange = None) -> pd.Series:
-        return self.get_data_range(self.data, range)[self.close]
+        return self.get_data_range(self.data, range)['Adj Close']
 
     def get_volume(self, range: DateRange = None) -> pd.Series:
         return self.get_data_range(self.data, range)["Volume"]
@@ -47,10 +46,13 @@ class Stock:
         return p.predict()
     
     def get_sma(self, days: int, range: DateRange = None) -> pd.Series:
-        return self.get_data_range(self.data[self.close].rolling(days).mean(), range)
+        return self.get_data_range(self.data['Adj Close'].rolling(days).mean(), range)
 
     def get_ema(self, days: int, range: DateRange = None) -> pd.Series:
-        return self.get_data_range(self.data[self.close].ewm(span=days, adjust=False).mean(), range)
+        return self.get_data_range(self.data['Adj Close'].ewm(span=days, adjust=False).mean(), range)
 
-    def get_latest_day(self) -> pd.Timestamp:
+    def get_closing_date(self) -> pd.Timestamp:
         return max(self.data.index)
+    
+    def get_closing_price(self) -> str:
+        return self.data.iloc[-1]['Adj Close']

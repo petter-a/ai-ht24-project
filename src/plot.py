@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from stock import Stock
 from lib_types import DateRange
-import matplotlib.cbook as cbook
 import matplotlib.dates as mdates
 
 class Plot:
@@ -14,12 +12,15 @@ class Plot:
 
         (self.fig, self.axs) = plt.subplots(2, 1, figsize=(20, 10), layout='constrained')
         self.axs[0].grid(True)
-        self.axs[0].set_title(f'{stock.get_company_name()}')
-        self.axs[0].set_ylabel("Stock Price ($)")
-        self.axs[0].set_xlabel("Date")
+        self.axs[0].set_title(self.format_title())
+        self.fig.suptitle(f'{stock.get_symbol_name()} - {stock.get_company_name()}', size=20)        
+
         self.axs[0].xaxis.set_minor_locator(mdates.DayLocator())
         self.axs[0].xaxis.set_major_formatter(mdates.ConciseDateFormatter(self.axs[0].xaxis.get_major_locator()))
-        
+
+    def format_title(self):
+        return f'Date: {self.stock.get_closing_date().strftime('%Y-%m-%d')}\nClosing price: ${self.stock.get_closing_price():1.2f}'
+
     def draw(self):
         self.plot_stock_price()
         self.plot_stock_prediction()

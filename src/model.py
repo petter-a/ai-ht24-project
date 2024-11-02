@@ -68,6 +68,9 @@ class StockModel:
         # used in the trining.
         self.dataset = frame[[
             'Adj Close', 
+            'Open', 
+            'High', 
+            'Low', 
             'Volume', 
             'SMA_high', 'SMA_low',
             'EMA_high', 'EMA_low'
