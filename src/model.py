@@ -40,7 +40,7 @@ class StockModel:
         self.epocs = 100
         self.batchsize = 32
         self.units = 50
-        self.patience = 4
+        self.patience = 8
         self.name = frame.values[0][0] # The unique name of the symbol
 
         # ====================================================
@@ -78,7 +78,7 @@ class StockModel:
         
         self.features = len(self.dataset.columns)
         
-    def train_model(self) -> Sequential:
+    def train_model(self, interactive: bool = True) -> Sequential:
         # ====================================================
         # Fit the transform to training data 
         # ====================================================
@@ -88,23 +88,21 @@ class StockModel:
             self.dataset)
         
         # ====================================================
+        # Split data between training and validation data
+        # ====================================================
+        # A common split is 80/20 which is also used here
+        size = int(len(scaled_dataset) * 0.8)
+        train_set, valid_set = scaled_dataset[:size], scaled_dataset[size:]
+
+        # ====================================================
         # Create timeseries for training 
         # ====================================================
         # The shape of the return values constitutes:
         # x: (samples, timesteps, feature_count)
-        # y: (samples, horizon, feature_count)       
-        x, y = self.create_sequences(
-            scaled_dataset)
-
-        # ====================================================
-        # Split data between training and validation data
-        # ====================================================
-        # A common split is 80/20 which is also used here
-        size = int(len(x) * 0.8)
-
-        x_train, x_val = x[:size], x[size:]
-        y_train, y_val = y[:size], y[size:]
-
+        # y: (samples, horizon, feature_count) 
+        x_train, y_train = self.create_sequences(train_set)
+        x_val, y_val = self.create_sequences(valid_set)
+        
         # ====================================================
         # Create pipeline
         # ====================================================
@@ -114,7 +112,6 @@ class StockModel:
             Dropout(0.2),
             RepeatVector(self.horizon),
             LSTM(self.units, activation='relu', return_sequences=True),
-            Dropout(0.2),
             TimeDistributed(Dense(self.features))
         ])
         # ====================================================
@@ -152,18 +149,19 @@ class StockModel:
         # ====================================================
         predictions = self.model.predict(x_val)
 
-        # ====================================================
-        # Reshape data
-        # ====================================================
-        rescaled_predictions = self.scaler.inverse_transform(predictions
-            .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
-        rescaled_validation = self.scaler.inverse_transform(y_val
-            .reshape(-1, y_val.shape[2])).reshape(y_val.shape)
-        
-        self.plot_metrics(
-            result, 
-            rescaled_predictions, 
-            rescaled_validation)
+        if interactive:
+            # ====================================================
+            # Reshape data
+            # ====================================================
+            rescaled_predictions = self.scaler.inverse_transform(predictions
+                .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
+            rescaled_validations = self.scaler.inverse_transform(valid_set)
+            
+            self.plot_metrics(
+                result, 
+                rescaled_predictions, 
+                rescaled_validations)
+
         return self.model
 
     def create_sequences(self, data: np.array) -> tuple[np.array, np.array]:
@@ -179,13 +177,14 @@ class StockModel:
         return np.array(x), np.array(y)
 
     def plot_metrics(self, results: any, predictions: pd.array, validation: pd.array):
-        predictions_close = predictions[:, -1, 0]
-        validation_close = validation[:, -1, 0]
+        predictions_close = predictions[:, :, 0].mean(axis=1)
+        validation_close = validation[:,0]
 
         fig = plt.figure(figsize=(20, 10), layout="constrained")
         spec = fig.add_gridspec(3, 3)
 
         ax = fig.add_subplot(spec[0, :])
+        ax.set_title(self.name)
         ax.plot(validation_close, label="True Values")
         ax.plot(predictions_close, label="Predictions")
         ax.xaxis.set_major_locator(ticker.MultipleLocator(100))
@@ -194,33 +193,33 @@ class StockModel:
         ax.legend()
 
         ax = fig.add_subplot(spec[1, 0])
-        ax.set_title("Loss")
-        ax.plot(results.epoch, results.history['loss'], label=f'Train: {np.sum(results.history['loss']):.4f}')
-        ax.plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.sum(results.history['val_loss']):.4f}')
+        ax.set_title("Loss (MAE)")
+        ax.plot(results.epoch, results.history['loss'], label=f'Train: {np.mean(results.history['loss']):.4f}')
+        ax.plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.mean(results.history['val_loss']):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[1, 1])
         ax.set_title("Root Mean Square Error")
-        ax.plot(results.epoch, tf.sqrt(results.history['mse']), label=f'Train: {np.sum(tf.sqrt(results.history['mse'])):.4f}')
-        ax.plot(results.epoch, tf.sqrt(results.history['val_mse']), label=f'Validation: {np.sum(tf.sqrt(results.history['val_mse'])):.4f}')
+        ax.plot(results.epoch, tf.sqrt(results.history['mse']), label=f'Train: {np.mean(tf.sqrt(results.history['mse'])):.4f}')
+        ax.plot(results.epoch, tf.sqrt(results.history['val_mse']), label=f'Validation: {np.mean(tf.sqrt(results.history['val_mse'])):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[1, 2])
         ax.set_title("Mean Square Error")
-        ax.plot(results.epoch, results.history['mse'], label=f'Train: {np.sum(results.history['mse']):.4f}')
-        ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.sum(results.history['val_mse']):.4f}')
+        ax.plot(results.epoch, results.history['mse'], label=f'Train: {np.mean(results.history['mse']):.4f}')
+        ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.mean(results.history['val_mse']):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[2, 0])
         ax.set_title("Symmetric Mean Absolute Percentage Error")
-        ax.plot(results.epoch, results.history['metric_smape'], label=f'Train: {np.sum(results.history['metric_smape']):.4f}')
-        ax.plot(results.epoch, results.history['val_metric_smape'], label=f'Validation: {np.sum(results.history['val_metric_smape']):.4f}')
+        ax.plot(results.epoch, results.history['metric_smape'], label=f'Train: {np.mean(results.history['metric_smape']):.4f}')
+        ax.plot(results.epoch, results.history['val_metric_smape'], label=f'Validation: {np.mean(results.history['val_metric_smape']):.4f}')
         ax.legend()
 
         ax = fig.add_subplot(spec[2, 1])
         ax.set_title("Coefficient of Determination")
-        ax.plot(results.epoch, results.history['metric_r2score'], label=f'Train: {np.sum(results.history['metric_r2score']):.4f}')
-        ax.plot(results.epoch, results.history['val_metric_r2score'], label=f'Validation: {np.sum(results.history['val_metric_r2score']):.4f}')
+        ax.plot(results.epoch, results.history['metric_r2score'], label=f'Train: {np.mean(results.history['metric_r2score']):.4f}')
+        ax.plot(results.epoch, results.history['val_metric_r2score'], label=f'Validation: {np.mean(results.history['val_metric_r2score']):.4f}')
         ax.legend()
 
         plt.show()

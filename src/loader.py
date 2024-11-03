@@ -25,22 +25,22 @@ class Loader:
         # ===========================================
         # Make sure data is sorted by Date
         # =========================================== 
-        data = data.sort_index()
+        data = data.sort_index().dropna()
         
         # ===========================================
         # Create the technical indicators
         # =========================================== 
         data['SMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=50).mean())
+            lambda x: x.rolling(window=10).mean())
         
         data['SMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=200).mean())
+            lambda x: x.rolling(window=30).mean())
         
         data['EMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.ewm(span=12, adjust=False).mean())
+            lambda x: x.ewm(span=10, adjust=False).mean())
 
         data['EMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.ewm(span=26, adjust=False).mean())
+            lambda x: x.ewm(span=30, adjust=False).mean())
         
         for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high']:
             # First rows will always be Nan and needs to be
@@ -56,3 +56,6 @@ class Loader:
         
     def get_stock(self, symbol: str) -> Stock:
         return Stock(self.get_company_info(symbol), self.get_stock_data(symbol))
+
+    def get_symbols(self) -> list:
+        return list(map(lambda x: self.get_stock(x), self.stocks['Symbol'].unique()))
