@@ -9,7 +9,7 @@ def main():
         print(stock.get_company_name())
         # Create and save model
         model = StockModel(stock.get_data())
-        model.train_model()
+        model.train_model(interactive=True)
         model.toFile()
 
 main()

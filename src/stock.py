@@ -45,11 +45,17 @@ class Stock:
         p.fromFile()  
         return p.predict()
     
-    def get_sma(self, days: int, range: DateRange = None) -> pd.Series:
-        return self.get_data_range(self.data['Adj Close'].rolling(days).mean(), range)
+    def get_sma_high(self, range: DateRange = None) -> pd.Series:
+        return self.get_data_range(self.data['SMA_high'], range)
 
-    def get_ema(self, days: int, range: DateRange = None) -> pd.Series:
-        return self.get_data_range(self.data['Adj Close'].ewm(span=days, adjust=False).mean(), range)
+    def get_sma_low(self, range: DateRange = None) -> pd.Series:
+        return self.get_data_range(self.data['SMA_low'], range)
+
+    def get_ema_high(self, range: DateRange = None) -> pd.Series:
+        return self.get_data_range(self.data['EMA_high'], range)
+
+    def get_ema_low(self, range: DateRange = None) -> pd.Series:
+        return self.get_data_range(self.data['EMA_low'], range)
 
     def get_closing_date(self) -> pd.Timestamp:
         return max(self.data.index)

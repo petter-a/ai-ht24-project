@@ -34,13 +34,15 @@ class StockModel:
         # ====================================================
         # Configuration
         # ====================================================
-        self.steps = 30         # The historically observed datapoints (days)
-        self.horizon = 10       # The number of future datapoints (days) to predict
+        self.train_size = 0.7
+        self.valid_size = 0.15
+        self.steps = 20         # The historically observed datapoints (days)
+        self.horizon = 1        # The number of future datapoints to predict
         self.learning_rate = 0.001 # The learning rate of the model
         self.epocs = 100
-        self.batchsize = 32
+        self.batchsize = self.steps
         self.units = 50
-        self.patience = 8
+        self.patience = 4
         self.name = frame.values[0][0] # The unique name of the symbol
 
         # ====================================================
@@ -111,8 +113,8 @@ class StockModel:
         # 15% for validation
         # Remaining data for test 
 
-        train_size = int(len(scaled_dataset) * 0.7)
-        valid_size = int(len(scaled_dataset) * 0.15 + train_size)
+        train_size = int(len(scaled_dataset) * self.train_size)
+        valid_size = int(len(scaled_dataset) * self.valid_size + train_size)
 
         train_set, valid_set, tests_set = (
             scaled_dataset[:train_size],
@@ -152,6 +154,7 @@ class StockModel:
             Dropout(0.2),
             RepeatVector(self.horizon),
             LSTM(self.units, activation='relu', return_sequences=True),
+            Dropout(0.2),
             TimeDistributed(Dense(self.features))
         ])
         # ====================================================
@@ -266,7 +269,7 @@ class StockModel:
        
         index = pd.date_range(self.dataset.index[-1], periods=len(closing_price)+1)[1:]
         # Populate Dataframe
-        frame = pd.DataFrame(rescaled_predictions[:, :, 0].mean(axis=1), columns=['Adj Close'])
+        frame = pd.DataFrame(closing_price[:,0], columns=['Adj Close'])
         # Set index 
         return frame.set_index(index)
 
@@ -280,7 +283,7 @@ class StockModel:
             joblib.dump(self.scaler, f'../models/{self.name}.save')
     
     def plot_metrics(self, results: any, evaluation: list, predictions: pd.array, validation: pd.array):
-        predictions_close = predictions[:, :, 0].mean(axis=1)
+        predictions_close = predictions[:, :, 0]
         validation_close = validation[:,0]
 
         fig = plt.figure(figsize=(20, 10), layout="constrained")
