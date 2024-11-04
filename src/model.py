@@ -71,8 +71,13 @@ class StockModel:
         self.dataset = frame[[
             'Adj Close', 
             'Volume',
+            'High',
+            'Low',
+            'Open',
+            'Close',
             'SMA_high', 'SMA_low',
-            'EMA_high', 'EMA_low'
+            'EMA_high', 'EMA_low',
+            'RSI_val'
             ]]
         
         self.features = len(self.dataset.columns)
@@ -210,7 +215,8 @@ class StockModel:
                 .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
             
             # Restore validation set
-            rescaled_validations = self.scaler.inverse_transform(valid_set)
+            rescaled_validations = self.scaler.inverse_transform(y_valid
+                .reshape(-1, y_valid.shape[2])).reshape(y_valid.shape)
             
             self.plot_metrics(
                 result,
@@ -284,7 +290,7 @@ class StockModel:
     
     def plot_metrics(self, results: any, evaluation: list, predictions: pd.array, validation: pd.array):
         predictions_close = predictions[:, :, 0]
-        validation_close = validation[:,0]
+        validation_close = validation[:, :, 0]
 
         fig = plt.figure(figsize=(20, 10), layout="constrained")
         spec = fig.add_gridspec(3, 3)

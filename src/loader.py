@@ -21,6 +21,15 @@ class Loader:
     def get_company_info(self, symbol: str) -> pd.DataFrame:
         return self.companies[self.companies.index == symbol]
 
+    def get_rsi(self, data: pd.DataFrame, window) -> pd.DataFrame: 
+        delta = data.diff()        
+
+        gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+        rs = gain / loss
+
+        return 100 - (100 / (1 + rs))
+
     def refine_stock_data(self, data: pd.DataFrame) -> pd.DataFrame:
         # ===========================================
         # Make sure data is sorted by Date
@@ -41,8 +50,11 @@ class Loader:
 
         data['EMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
             lambda x: x.ewm(span=36, adjust=False).mean())
-        
-        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high']:
+
+        data['RSI_val'] = data.groupby('Symbol')['Adj Close'].transform(
+            lambda x: self.get_rsi(x, 14))
+
+        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
             data[column] = data.groupby('Symbol')[column].bfill()
