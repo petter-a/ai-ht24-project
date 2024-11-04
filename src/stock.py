@@ -57,6 +57,9 @@ class Stock:
     def get_ema_low(self, range: DateRange = None) -> pd.Series:
         return self.get_data_range(self.data['EMA_low'], range)
 
+    def get_rsi_val(self, range: DateRange = None) -> pd.Series:
+        return self.get_data_range(self.data['RSI_val'], range)
+
     def get_closing_date(self) -> pd.Timestamp:
         return max(self.data.index)
     

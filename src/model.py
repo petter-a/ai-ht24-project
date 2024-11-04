@@ -71,10 +71,6 @@ class StockModel:
         self.dataset = frame[[
             'Adj Close', 
             'Volume',
-            'High',
-            'Low',
-            'Open',
-            'Close',
             'SMA_high', 'SMA_low',
             'EMA_high', 'EMA_low',
             'RSI_val'
@@ -244,7 +240,7 @@ class StockModel:
         # ===========================================
         # Extract the last N days from the most recent dataset
         scaled_dataset = self.scaler.transform(
-            self.dataset[-(self.steps*2):])
+            self.dataset[-(self.steps*3):])
 
         # ===========================================
         # Reshape scaled data

@@ -11,7 +11,7 @@ class Plot:
         self.stock = stock
         self.range = range
 
-        (self.fig, self.axs) = plt.subplots(2, 1, figsize=(20, 10), layout='constrained')
+        (self.fig, self.axs) = plt.subplots(3, 1, figsize=(20, 10), layout='constrained')
         self.axs[0].grid(True)
         self.axs[0].set_title(self.format_title())
         self.fig.suptitle(f'{stock.get_symbol_name()} - {stock.get_company_name()}', size=20)        
@@ -30,6 +30,7 @@ class Plot:
         self.plot_mean_price()
         self.plot_max_price()
         self.plot_min_price()
+        self.plot_rsi()
         self.plot_volume()
         self.axs[0].legend()
         plt.show()
@@ -64,6 +65,13 @@ class Plot:
         prices = self.stock.get_price(self.range)
         self.axs[0].axhline(y=prices.mean(), color='brown', linestyle="--", label=f'Medel: ${prices.mean():1.2f}')
 
+    def plot_rsi(self):
+        prices = self.stock.get_rsi_val(self.range)
+        self.axs[1].set_title('RSI - Relative Strength Index')
+        self.axs[1].axhline(y=[70], color='grey', linestyle="--")
+        self.axs[1].plot(prices, color='blue', label='RSI')
+        self.axs[1].axhline(y=[30], color='grey', linestyle="--")
+
     def plot_volume(self):
         volume = self.stock.get_volume(self.range)
-        self.axs[1].bar(volume.index, volume)
+        self.axs[2].bar(volume.index, volume)
