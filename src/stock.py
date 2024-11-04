@@ -56,3 +56,5 @@ class Stock:
     
     def get_closing_price(self) -> str:
         return self.data.iloc[-1]['Adj Close']
+    
+    def get_data(self) -> pd.DataFrame: return self.data

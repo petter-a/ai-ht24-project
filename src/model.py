@@ -68,9 +68,6 @@ class StockModel:
         # used in the trining.
         self.dataset = frame[[
             'Adj Close', 
-            'Open',
-            'High',
-            'Low',
             'Volume',
             'SMA_high', 'SMA_low',
             'EMA_high', 'EMA_low'
@@ -171,8 +168,8 @@ class StockModel:
         x, y = [], []
 
         for i in range(len(data) - self.steps - self.horizon +1):
-            x.append(data[i:(i + self.steps)])
-            y.append(data[(i + self.steps):(i + self.steps + self.horizon)])
+            x.append(data[i:i + self.steps])
+            y.append(data[i + self.steps:i + self.steps + self.horizon])
 
         return np.array(x), np.array(y)
 
@@ -187,7 +184,7 @@ class StockModel:
         ax.set_title(self.name)
         ax.plot(validation_close, label="True Values")
         ax.plot(predictions_close, label="Predictions")
-        ax.xaxis.set_major_locator(ticker.MultipleLocator(100))
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
         ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
         ax.grid(True)
         ax.legend()
@@ -230,32 +227,25 @@ class StockModel:
         # ===========================================
         # Extract the last N days from the most recent dataset
         scaled_dataset = self.scaler.transform(
-            self.dataset[-self.steps:])
+            self.dataset[-(self.steps*2):])
 
         # ===========================================
         # Reshape scaled data
         # ===========================================
         # Shape needed is: (Samples, steps, features)
-        reshaped_dataset = scaled_dataset.reshape(
-            -1, 
-            self.steps ,
-            self.features)
+        x_predict, _ = self.create_sequences(scaled_dataset)
         
         # ===========================================
         # Perform prediction
         # ===========================================
-        predictions = self.model.predict(reshaped_dataset)
+        predictions = self.model.predict(x_predict)
 
         # ===========================================
         # Reshape predictions 
         # ===========================================
         # Shape needed is: (days, features)
-        reshape = predictions.reshape(-1, self.features)
-        
-        # ===========================================
-        # Inverse transform
-        # ===========================================        
-        inverse = self.scaler.inverse_transform(reshape)
+        rescaled_predictions = self.scaler.inverse_transform(predictions
+            .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
 
         # ===========================================
         # Create a date range in the future
@@ -264,9 +254,11 @@ class StockModel:
         # the original dataset closely.
         # Using the last day in the dataset +1 to be
         # the first day of prediction
-        index = pd.date_range(self.dataset.index[-1], periods=len(inverse)+1)[1:]
+        closing_price = rescaled_predictions[:, :, 0]
+       
+        index = pd.date_range(self.dataset.index[-1], periods=len(closing_price)+1)[1:]
         # Populate Dataframe
-        frame = pd.DataFrame(inverse[:,:], columns=self.dataset.columns)
+        frame = pd.DataFrame(rescaled_predictions[:, :, 0].mean(axis=1), columns=['Adj Close'])
         # Set index 
         return frame.set_index(index)
 

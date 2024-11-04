@@ -31,6 +31,7 @@ class Plot:
         self.plot_min_price()
         self.plot_volume()
         self.axs[0].legend()
+        plt.show()
 
 
     def plot_stock_price(self):
@@ -65,6 +66,3 @@ class Plot:
     def plot_volume(self):
         volume = self.stock.get_volume(self.range)
         self.axs[1].bar(volume.index, volume)
-    
-    def show(self):
-        plt.show()

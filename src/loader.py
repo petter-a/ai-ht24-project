@@ -31,16 +31,16 @@ class Loader:
         # Create the technical indicators
         # =========================================== 
         data['SMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=10).mean())
+            lambda x: x.rolling(window=50).mean())
         
         data['SMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=30).mean())
+            lambda x: x.rolling(window=200).mean())
         
         data['EMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.ewm(span=10, adjust=False).mean())
+            lambda x: x.ewm(span=12, adjust=False).mean())
 
         data['EMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.ewm(span=30, adjust=False).mean())
+            lambda x: x.ewm(span=36, adjust=False).mean())
         
         for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high']:
             # First rows will always be Nan and needs to be
