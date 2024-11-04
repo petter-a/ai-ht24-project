@@ -41,8 +41,9 @@ class Plot:
         self.axs[0].plot(prices, color='green', label='Price')
 
     def plot_stock_prediction(self):
-        prices = self.stock.get_predicted_price()['Adj Close']
-        self.axs[0].plot(prices, color='grey', label='Predicted Price')
+        prices = self.stock.get_predicted_price()
+        self.axs[0].plot(prices['Adj Close'], color='grey', label='Predicted Price')
+        self.axs[2].bar(prices['Volume'].index, prices['Volume'], color='grey', label='Predicted Volume')
 
     def plot_max_price(self):
         prices = self.stock.get_price(self.range)
@@ -74,4 +75,4 @@ class Plot:
 
     def plot_volume(self):
         volume = self.stock.get_volume(self.range)
-        self.axs[2].bar(volume.index, volume)
+        self.axs[2].bar(volume.index, volume, label="Volume")

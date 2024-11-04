@@ -268,11 +268,15 @@ class StockModel:
         # the original dataset closely.
         # Using the last day in the dataset +1 to be
         # the first day of prediction
-        closing_price = rescaled_predictions[:, :, 0]
-       
-        index = pd.date_range(self.dataset.index[-1], periods=len(closing_price)+1)[1:]
+        prices = rescaled_predictions[:, :, 0]
+        volume = rescaled_predictions[:, :, 1]
+
+        index = pd.date_range(self.dataset.index[-1], periods=rescaled_predictions.shape[0]+1)[1:]
         # Populate Dataframe
-        frame = pd.DataFrame(closing_price[:,0], columns=['Adj Close'])
+        frame = pd.DataFrame({
+            'Adj Close': prices[:,0],
+            'Volume': volume[:,0]
+            })
         # Set index 
         return frame.set_index(index)
 
