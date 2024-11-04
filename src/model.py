@@ -216,6 +216,7 @@ class StockModel:
             
             self.plot_metrics(
                 result,
+                [len(train_set), len(valid_set), len(tests_set)],
                 eval_metrics,
                 rescaled_predictions, 
                 rescaled_validations)
@@ -284,12 +285,12 @@ class StockModel:
             self.model.save(f'../models/{self.name}.keras')
             joblib.dump(self.scaler, f'../models/{self.name}.save')
     
-    def plot_metrics(self, results: any, evaluation: list, predictions: pd.array, validation: pd.array):
+    def plot_metrics(self, results: any, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
         predictions_close = predictions[:, :, 0]
         validation_close = validation[:, :, 0]
 
         fig = plt.figure(figsize=(20, 10), layout="constrained")
-        spec = fig.add_gridspec(3, 3)
+        spec = fig.add_gridspec(3, 4)
 
         ax = fig.add_subplot(spec[0, :])
         fig.suptitle(self.name)
@@ -318,16 +319,21 @@ class StockModel:
         ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.mean(results.history['val_mse']):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[2, 0])
+        ax = fig.add_subplot(spec[1, 3])
         ax.set_title("Symmetric Mean Absolute Percentage Error")
         ax.plot(results.epoch, results.history['metric_smape'], label=f'Train: {np.mean(results.history['metric_smape']):.4f}')
         ax.plot(results.epoch, results.history['val_metric_smape'], label=f'Validation: {np.mean(results.history['val_metric_smape']):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[2, 1])
+        ax = fig.add_subplot(spec[2, 0])
         ax.set_title("Coefficient of Determination")
         ax.plot(results.epoch, results.history['metric_r2score'], label=f'Train: {np.mean(results.history['metric_r2score']):.4f}')
         ax.plot(results.epoch, results.history['val_metric_r2score'], label=f'Validation: {np.mean(results.history['val_metric_r2score']):.4f}')
+        ax.legend()
+
+        ax = fig.add_subplot(spec[2, 1])
+        ax.set_title("Training data")
+        ax.pie(sizes, labels=sizes)
         ax.legend()
 
         ax = fig.add_subplot(spec[2, 2])
