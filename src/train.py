@@ -3,7 +3,7 @@ from model import StockModel
 
 def main():
     # Load and prepare data
-    loader = Loader()
+    loader = Loader().load_preprocessed_data()
 
     for stock in loader.get_symbols():
         print(stock.get_company_name())

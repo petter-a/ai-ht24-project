@@ -92,7 +92,7 @@ class Loader:
             data[column] = data.groupby('Symbol')[column].bfill()
         return data
 
-    def calculate_rsi(self, data: pd.DataFrame, window) -> pd.DataFrame: 
+    def calculate_rsi(self, data: pd.DataFrame, window: int) -> pd.DataFrame: 
         delta = data.diff()        
 
         gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
