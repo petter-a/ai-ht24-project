@@ -4,6 +4,7 @@ import tensorflow as tf
 import keras 
 import joblib
 import config
+from typing import Self
 from sklearn.preprocessing import MinMaxScaler
 from keras import Input
 from keras.models import Sequential
@@ -79,7 +80,7 @@ class StockModel:
         
         self.features = len(self.dataset.columns)
         
-    def train_model(self, interactive: bool = True) -> Sequential:
+    def train_model(self, interactive: bool = True) -> Self:
         # ====================================================
         # Fit the transform to training data 
         # ====================================================
@@ -222,7 +223,7 @@ class StockModel:
                 rescaled_predictions, 
                 rescaled_validations)
 
-        return self.model
+        return self
 
     def create_sequences(self, data: np.array) -> tuple[np.array, np.array]:
         # ====================================================
