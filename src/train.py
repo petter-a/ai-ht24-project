@@ -10,7 +10,7 @@ def main():
         # Create and save model
         model = StockModel(stock.get_data())
         model.train_model(interactive=True)
-        model.toFile()
+        model.save_model()
 
 main()
 

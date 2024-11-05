@@ -1,10 +1,7 @@
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from stock import Stock
-from lib_types import DateRange
+from config import DateRange
 import matplotlib.dates as mdates
-from matplotlib.patches import ConnectionPatch
 
 class Plot:
     def __init__(self, stock: Stock, range: DateRange):

@@ -3,6 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import keras 
 import joblib
+import config
 from sklearn.preprocessing import MinMaxScaler
 from keras import Input
 from keras.models import Sequential
@@ -279,15 +280,6 @@ class StockModel:
             })
         # Set index 
         return frame.set_index(index)
-
-    def fromFile(self):
-        self.model = keras.saving.load_model(f'../models/{self.name}.keras')
-        self.scaler = joblib.load(f'../models/{self.name}.save')
-        
-    def toFile(self):
-        if self.model != None:
-            self.model.save(f'../models/{self.name}.keras')
-            joblib.dump(self.scaler, f'../models/{self.name}.save')
     
     def plot_metrics(self, results: any, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
         predictions_close = predictions[:, :, 0]
@@ -346,3 +338,12 @@ class StockModel:
         for i, v in enumerate(evaluation):
             ax.text(i, v, f"{v:.4f}", ha='center', va='bottom')
         plt.show()
+
+    def load_model(self, path: str = config.models_path):
+        self.model = keras.saving.load_model(f'{path}/{self.name}.keras')
+        self.scaler = joblib.load(f'{path}/{self.name}.save')
+
+    def save_model(self, path: str = config.models_path):
+        if self.model != None:
+            self.model.save(f'{path}/{self.name}.keras')
+            joblib.dump(self.scaler, f'{path}{self.name}.save')

@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from lib_types import DateRange
+from config import DateRange
 from model import StockModel
 
 def to_str(frame: pd.DataFrame, field: str) -> str: return frame[field].values[0]
@@ -42,7 +42,7 @@ class Stock:
 
     def get_predicted_price(self) -> pd.DataFrame:
         p = StockModel(self.data)
-        p.fromFile()  
+        p.load_model()  
         return p.predict()
     
     def get_sma_high(self, range: DateRange = None) -> pd.Series:
