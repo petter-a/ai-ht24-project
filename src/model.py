@@ -347,4 +347,4 @@ class StockModel:
     def save_model(self, path: str = config.models_path):
         if self.model != None:
             self.model.save(f'{path}/{self.name}.keras')
-            joblib.dump(self.scaler, f'{path}{self.name}.save')
+            joblib.dump(self.scaler, f'{path}/{self.name}.save')
