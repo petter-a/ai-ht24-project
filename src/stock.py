@@ -41,7 +41,7 @@ class Stock:
         return self.get_data_range(self.data, range)["Volume"]
 
     def get_predicted_price(self) -> pd.DataFrame:
-        p = StockModel(self.data)
+        p = StockModel(self.data, self.get_symbol_name())
         p.load_model()  
         return p.predict()
     

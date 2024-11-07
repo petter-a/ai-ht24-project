@@ -32,7 +32,7 @@ def metric_r2score(y_true, y_pred):
 
 class StockModel:
 
-    def __init__(self, frame: pd.DataFrame):
+    def __init__(self, frame: pd.DataFrame, name: str):
         # ====================================================
         # Configuration
         # ====================================================
@@ -45,7 +45,7 @@ class StockModel:
         self.batchsize = self.steps
         self.units = 50
         self.patience = 4
-        self.name = frame.values[0][0] # The unique name of the symbol
+        self.name = name        # The unique name of the symbol
 
         # ====================================================
         # Dashboard
