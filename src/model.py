@@ -48,6 +48,12 @@ class StockModel:
         self.name = frame.values[0][0] # The unique name of the symbol
 
         # ====================================================
+        # Dashboard
+        # ====================================================
+        # The matplotlib dashboard of training metrics
+        self.fig = None
+
+        # ====================================================
         # The trained model
         # ====================================================
         # Either trained on the fly or loaded from disk
@@ -198,30 +204,30 @@ class StockModel:
         for i, metric in enumerate(eval_metrics):
             print(f'Metric-{i}: {metric}')
                 
-        if interactive:
-            # ====================================================
-            # Make predictions on validation data
-            # ====================================================
-            predictions = self.model.predict(x_valid)
+        # ====================================================
+        # Make predictions on validation data
+        # ====================================================
+        predictions = self.model.predict(x_valid)
 
-            # ====================================================
-            # Reshape data
-            # ====================================================
-            
-            # Restore predictions
-            rescaled_predictions = self.scaler.inverse_transform(predictions
-                .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
-            
-            # Restore validation set
-            rescaled_validations = self.scaler.inverse_transform(y_valid
-                .reshape(-1, y_valid.shape[2])).reshape(y_valid.shape)
-            
-            self.plot_metrics(
-                result,
-                [len(train_set), len(valid_set), len(tests_set)],
-                eval_metrics,
-                rescaled_predictions, 
-                rescaled_validations)
+        # ====================================================
+        # Reshape data
+        # ====================================================
+
+        # Restore predictions
+        rescaled_predictions = self.scaler.inverse_transform(predictions
+            .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
+
+        # Restore validation set
+        rescaled_validations = self.scaler.inverse_transform(y_valid
+            .reshape(-1, y_valid.shape[2])).reshape(y_valid.shape)
+
+        self.plot_metrics(
+            result,
+            interactive,
+            [len(train_set), len(valid_set), len(tests_set)],
+            eval_metrics,
+            rescaled_predictions,
+            rescaled_validations)
 
         return self
 
@@ -282,15 +288,15 @@ class StockModel:
         # Set index 
         return frame.set_index(index)
     
-    def plot_metrics(self, results: any, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
+    def plot_metrics(self, results: any, interactive: bool, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
         predictions_close = predictions[:, :, 0]
         validation_close = validation[:, :, 0]
 
-        fig = plt.figure(figsize=(20, 10), layout="constrained")
-        spec = fig.add_gridspec(3, 4)
+        self.fig = plt.figure(figsize=(20, 10), layout="constrained")
+        spec = self.fig.add_gridspec(3, 4)
 
-        ax = fig.add_subplot(spec[0, :])
-        fig.suptitle(self.name)
+        ax = self.fig.add_subplot(spec[0, :])
+        self.fig.suptitle(self.name)
         ax.plot(validation_close, label="True Values")
         ax.plot(predictions_close, label="Predictions")
         ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
@@ -298,47 +304,49 @@ class StockModel:
         ax.grid(True)
         ax.legend()
 
-        ax = fig.add_subplot(spec[1, 0])
+        ax = self.fig.add_subplot(spec[1, 0])
         ax.set_title("Loss (MAE)")
         ax.plot(results.epoch, results.history['loss'], label=f'Train: {np.mean(results.history['loss']):.4f}')
         ax.plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.mean(results.history['val_loss']):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[1, 1])
+        ax = self.fig.add_subplot(spec[1, 1])
         ax.set_title("Root Mean Square Error")
         ax.plot(results.epoch, tf.sqrt(results.history['mse']), label=f'Train: {np.mean(tf.sqrt(results.history['mse'])):.4f}')
         ax.plot(results.epoch, tf.sqrt(results.history['val_mse']), label=f'Validation: {np.mean(tf.sqrt(results.history['val_mse'])):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[1, 2])
+        ax = self.fig.add_subplot(spec[1, 2])
         ax.set_title("Mean Square Error")
         ax.plot(results.epoch, results.history['mse'], label=f'Train: {np.mean(results.history['mse']):.4f}')
         ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.mean(results.history['val_mse']):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[1, 3])
+        ax = self.fig.add_subplot(spec[1, 3])
         ax.set_title("Symmetric Mean Absolute Percentage Error")
         ax.plot(results.epoch, results.history['metric_smape'], label=f'Train: {np.mean(results.history['metric_smape']):.4f}')
         ax.plot(results.epoch, results.history['val_metric_smape'], label=f'Validation: {np.mean(results.history['val_metric_smape']):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[2, 0])
+        ax = self.fig.add_subplot(spec[2, 0])
         ax.set_title("Coefficient of Determination")
         ax.plot(results.epoch, results.history['metric_r2score'], label=f'Train: {np.mean(results.history['metric_r2score']):.4f}')
         ax.plot(results.epoch, results.history['val_metric_r2score'], label=f'Validation: {np.mean(results.history['val_metric_r2score']):.4f}')
         ax.legend()
 
-        ax = fig.add_subplot(spec[2, 1])
+        ax = self.fig.add_subplot(spec[2, 1])
         ax.set_title("Training data")
         ax.pie(sizes, labels=sizes)
         ax.legend()
 
-        ax = fig.add_subplot(spec[2, 2])
+        ax = self.fig.add_subplot(spec[2, 2])
         ax.set_title("Test evaluation")
         ax.bar(['a', 'b', 'c', 'd'], evaluation)
         for i, v in enumerate(evaluation):
             ax.text(i, v, f"{v:.4f}", ha='center', va='bottom')
-        plt.show()
+
+        if interactive:
+            plt.show(block=True)
 
     def load_model(self, path: str = config.models_path):
         self.model = keras.saving.load_model(f'{path}/{self.name}.keras')
@@ -348,3 +356,6 @@ class StockModel:
         if self.model != None:
             self.model.save(f'{path}/{self.name}.keras')
             joblib.dump(self.scaler, f'{path}/{self.name}.save')
+        if self.fig != None:
+            self.fig.savefig(f'{path}/{self.name}.png')
+
