@@ -51,6 +51,9 @@ class Loader:
     def get_company_info(self, symbol: str) -> pd.DataFrame:
         return self.companies[self.companies.index == symbol]
 
+    def list_companies(self) -> list:
+        return self.companies.sort_index().to_string(columns=['Shortname'])
+
     def get_stock_data(self, symbol: str) -> pd.DataFrame:
         # ===========================================
         # Make sure data is sorted by Date

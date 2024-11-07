@@ -1,16 +1,29 @@
 from loader import Loader 
 from model import StockModel
+import argparse
 
 def main():
     # Load and prepare data
     loader = Loader().load_preprocessed_data()
 
-    for stock in loader.get_symbols():
-        print(stock.get_company_name())
+    parser = argparse.ArgumentParser(prog='train')
+    parser.add_argument("--list", action="store_true", help="List all available symbols")
+    parser.add_argument('symbols', nargs='*', default=[], help='Stock symbols to build')
+    args = parser.parse_args()
+
+    if args.list:
+        print(loader.list_companies())
+        exit(0)
+
+    if args.symbols == []:
+        parser.print_help()
+    
+    for symbol in args.symbols:
+        stock = loader.get_stock(symbol)        
+        
+        print(f'Training {stock.get_company_name()} ({stock.get_symbol_name()})')
         # Create and save model
         model = StockModel(stock.get_data())
-        model.train_model(interactive=True)
-        model.save_model()
-
+        model.train_model(interactive=False).save_model()
 main()
 
