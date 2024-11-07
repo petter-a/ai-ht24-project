@@ -54,11 +54,10 @@ class Loader:
     def list_companies(self) -> list:
         return self.companies.sort_index().to_string(columns=['Shortname'])
 
-    def get_stock_data(self, symbol: str) -> pd.DataFrame:
-        # ===========================================
-        # Make sure data is sorted by Date
-        # =========================================== 
-        return self.stocks[self.stocks['Symbol'] == symbol]
+    def get_stock_data(self, symbol: str = None) -> pd.DataFrame:
+        if None != symbol:
+            return self.stocks[self.stocks['Symbol'] == symbol]
+        return self.stocks
         
     def get_stock(self, symbol: str) -> Stock:
         return Stock(self.get_company_info(symbol), self.get_stock_data(symbol))
@@ -70,7 +69,7 @@ class Loader:
         # ===========================================
         # Make sure data is sorted by Date
         # =========================================== 
-        data = data.sort_index().dropna()        
+        data = data.sort_values(by=['Symbol', 'Date']).dropna()
         # ===========================================
         # Create the technical indicators
         # =========================================== 
