@@ -36,12 +36,12 @@ class StockModel:
         # ====================================================
         # Configuration
         # ====================================================
-        self.train_size = 0.7
-        self.valid_size = 0.15
+        self.train_size = 0.7   # The size of the training data in percentage
+        self.valid_size = 0.15  # The size of the validation data in percentage
         self.steps = 20         # The historically observed datapoints (days)
         self.horizon = 1        # The number of future datapoints to predict
         self.learning_rate = 0.001 # The learning rate of the model
-        self.epocs = 100
+        self.epocs = 100        # The maximum number of epocs
         self.batchsize = self.steps
         self.units = 50
         self.patience = 4
@@ -62,20 +62,19 @@ class StockModel:
         # ====================================================
         # The scaler to be used
         # ====================================================
-        # It is important that the scalers configuration is serialized
-        # together with the model as it needs to be configured
+        # NOTE: The scaler configuration is serialized
+        # together with the model as it needs to be aligned
         # with the training data. If the model is loaded from
-        # file. The scaling needs to be restored separately.
+        # file, the scaler needs to be restored separately.
         self.scaler = MinMaxScaler(
             feature_range=(0, 1))
         
         # ====================================================
-        # Extract fetures to train the model with
+        # Extract the features to train the model with
         # ====================================================
         # The first column which represents the Closing price
         # is to be considered the conclusive output for the
-        # prediction (The "label"). All 5 features will be 
-        # used in the trining.
+        # prediction (The "label").
         self.dataset = frame[[
             'Adj Close', 
             'Volume',
@@ -90,7 +89,6 @@ class StockModel:
         # ====================================================
         # Fit the transform to training data 
         # ====================================================
-
         scaled_dataset = self.scaler.fit_transform(
             self.dataset)
         
