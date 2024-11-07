@@ -89,7 +89,10 @@ class Loader:
         for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
-            data[column] = data.groupby('Symbol')[column].bfill()
+            # In cases where backfill cannot take place (A coluymn with only NaN)
+            # Fallback to '0'
+            data[column] = data.groupby('Symbol')[column].bfill().fillna(0)
+
         return data
 
     def calculate_rsi(self, data: pd.DataFrame, window: int) -> pd.DataFrame: 
