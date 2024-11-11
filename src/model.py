@@ -346,14 +346,16 @@ class StockModel:
         if interactive:
             plt.show(block=True)
 
-    def load_model(self, path: str = config.models_path):
+    def load_model(self, path: str = config.models_path) -> Self:
         self.model = keras.saving.load_model(f'{path}/{self.name}.keras')
         self.scaler = joblib.load(f'{path}/{self.name}.save')
+        return self
 
-    def save_model(self, path: str = config.models_path):
+    def save_model(self, path: str = config.models_path) -> Self:
         if self.model != None:
             self.model.save(f'{path}/{self.name}.keras')
             joblib.dump(self.scaler, f'{path}/{self.name}.save')
         if self.fig != None:
             self.fig.savefig(f'{path}/{self.name}.png')
+        return self
 

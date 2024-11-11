@@ -30,7 +30,7 @@ class Plot:
         self.plot_rsi()
         self.plot_volume()
         self.axs[0].legend()
-        plt.show()
+        plt.show(block=True)
 
 
     def plot_stock_price(self):
