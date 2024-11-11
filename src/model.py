@@ -57,7 +57,7 @@ class StockModel:
         # The trained model
         # ====================================================
         # Either trained on the fly or loaded from disk
-        self.model = None
+        self.model: Sequential = None
 
         # ====================================================
         # The scaler to be used
@@ -86,31 +86,33 @@ class StockModel:
         self.features = len(self.dataset.columns)
         
     def train_model(self, interactive: bool = True) -> Self:
-        # ====================================================
-        # Fit the transform to training data 
-        # ====================================================
-        scaled_dataset = self.scaler.fit_transform(
-            self.dataset)
-        
         '''
         Example input dataset. Shape: (Samples, Features):
         
         print(self.dataset.tail(3))
 
-                     Adj Close     Volume    SMA_high     SMA_low    EMA_high     EMA_low
-        Date                                                                             
-        2024-10-30  127.559998  2737200.0  104.462501  132.911551  131.504459  130.393407
-        2024-10-31  128.470001  3408800.0  104.673950  132.910209  131.340434  130.097498
-        2024-11-01  127.220001  3068700.0  104.877687  132.896400  131.117708  129.654806
+                    Adj Close      Volume   SMA_high     SMA_low    EMA_high     EMA_low    RSI_val
+        Date
+        2024-11-06  145.100006  32911500.0  162.48170  154.319401  153.874478  149.175123  38.953834
+        2024-11-07  149.820007  30326400.0  162.33935  154.388601  153.655318  149.274336  44.399930
+        2024-11-08  147.949997  27507400.0  162.17745  154.437801  153.346922  149.070591  40.929810
+        '''
 
+        # ====================================================
+        # Fit the transform to training data
+        # ====================================================
+        scaled_dataset = pd.DataFrame(self.scaler.fit_transform(
+            self.dataset), columns=self.dataset.columns)
+
+        '''
         Example scaled data:
 
-        print(self.scaler.fit_transform(self.dataset.tail(3)))
+        print(scaled_dataset.tail(3))
 
-        [[0.27199707 0.         0.         1.         1.         1.        ]
-        [ 1.         1.         0.50928784 0.91145309 0.57589041 0.59936585]
-        [ 0.         0.49359738 1.         0.         0.         0.        ]]
-                
+                Adj Close   Volume      SMA_high    SMA_low     EMA_high    EMA_low   RSI_val
+        3736    0.684020    0.101248    0.995950    0.846819    0.838095    0.752214  0.378190
+        3737    0.706522    0.093295    0.995066    0.847204    0.836887    0.752720  0.436706
+        3738    0.697607    0.084623    0.994061    0.847477    0.835187    0.751681  0.399421
         '''
         
         # ====================================================
@@ -138,6 +140,7 @@ class StockModel:
 
         print(len(tests_set))
         561
+
         '''
         # ====================================================
         # Create timeseries for training 
@@ -208,16 +211,10 @@ class StockModel:
         predictions = self.model.predict(x_valid)
 
         # ====================================================
-        # Reshape data
+        # Reshape data for presentation
         # ====================================================
-
-        # Restore predictions
-        rescaled_predictions = self.scaler.inverse_transform(predictions
-            .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
-
-        # Restore validation set
-        rescaled_validations = self.scaler.inverse_transform(y_valid
-            .reshape(-1, y_valid.shape[2])).reshape(y_valid.shape)
+        rescaled_predictions = self.inverse_transform(predictions)
+        rescaled_validations = self.inverse_transform(y_valid)
 
         self.plot_metrics(
             result,
@@ -241,19 +238,30 @@ class StockModel:
 
         return np.array(x), np.array(y)
 
+    def inverse_transform(self, data: np.array) -> pd.DataFrame:
+        # ===========================================
+        # Reshapes predictions to the original dataframe
+        # ===========================================
+        # (samples, horizon, features) => (samples, features)
+        return pd.DataFrame(
+            self.scaler.inverse_transform(
+                data.reshape(data.shape[0], data.shape[2])),
+                columns=self.dataset.columns
+            )
+
     def predict(self) -> pd.DataFrame:
         # ===========================================
         # Scale to fit 0 - 1
         # ===========================================
         # Extract the last N days from the most recent dataset
-        scaled_dataset = self.scaler.transform(
-            self.dataset[-(self.steps*3):])
+        scaled_dataset = pd.DataFrame(self.scaler.transform(
+            self.dataset[-(self.steps*3):]), columns=self.dataset.columns)
 
         # ===========================================
         # Reshape scaled data
         # ===========================================
         # Shape needed is: (Samples, steps, features)
-        x_predict, _ = self.create_sequences(scaled_dataset)
+        x_predict, _ = self.create_sequences(scaled_dataset.values)
         
         # ===========================================
         # Perform prediction
@@ -264,8 +272,7 @@ class StockModel:
         # Reshape predictions 
         # ===========================================
         # Shape needed is: (days, features)
-        rescaled_predictions = self.scaler.inverse_transform(predictions
-            .reshape(-1, predictions.shape[2])).reshape(predictions.shape)
+        rescaled_predictions = self.inverse_transform(predictions)
 
         # ===========================================
         # Create a date range in the future
@@ -274,21 +281,13 @@ class StockModel:
         # the original dataset closely.
         # Using the last day in the dataset +1 to be
         # the first day of prediction
-        prices = rescaled_predictions[:, :, 0]
-        volume = rescaled_predictions[:, :, 1]
-
         index = pd.date_range(self.dataset.index[-1], periods=rescaled_predictions.shape[0]+1)[1:]
-        # Populate Dataframe
-        frame = pd.DataFrame({
-            'Adj Close': prices[:,0],
-            'Volume': volume[:,0]
-            })
         # Set index 
-        return frame.set_index(index)
+        return rescaled_predictions.set_index(index)
     
     def plot_metrics(self, results: any, interactive: bool, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
-        predictions_close = predictions[:, :, 0]
-        validation_close = validation[:, :, 0]
+        predictions_close = predictions['Adj Close']
+        validation_close = validation['Adj Close']
 
         self.fig = plt.figure(figsize=(20, 10), layout="constrained")
         spec = self.fig.add_gridspec(3, 4)
