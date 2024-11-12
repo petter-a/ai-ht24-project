@@ -38,13 +38,13 @@ class StockModel:
         # ====================================================
         self.train_size = 0.7   # The size of the training data in percentage
         self.valid_size = 0.15  # The size of the validation data in percentage
-        self.steps = 20         # The historically observed datapoints (days)
-        self.horizon = 1        # The number of future datapoints to predict
-        self.learning_rate = 0.001 # The learning rate of the model
+        self.steps = 30         # The historically observed datapoints (days)
+        self.horizon = 10        # The number of future datapoints to predict
+        self.learning_rate = 0.0001 # The learning rate of the model
         self.epocs = 100        # The maximum number of epocs
         self.batchsize = self.steps
         self.units = 50
-        self.patience = 4
+        self.patience = 6
         self.name = name        # The unique name of the symbol
 
         # ====================================================
@@ -76,10 +76,12 @@ class StockModel:
         # is to be considered the conclusive output for the
         # prediction (The "label").
         self.dataset = frame[[
-            'Adj Close', 
-            'Volume',
+            'Close',
+            'Open', 'Volume',
+            'High', 'Low',
             'SMA_high', 'SMA_low',
             'EMA_high', 'EMA_low',
+            'DEMA_val', 'ROCR_val',
             'RSI_val'
             ]]
         
@@ -91,11 +93,10 @@ class StockModel:
         
         print(self.dataset.tail(3))
 
-                    Adj Close      Volume   SMA_high     SMA_low    EMA_high     EMA_low    RSI_val
-        Date
-        2024-11-06  145.100006  32911500.0  162.48170  154.319401  153.874478  149.175123  38.953834
-        2024-11-07  149.820007  30326400.0  162.33935  154.388601  153.655318  149.274336  44.399930
-        2024-11-08  147.949997  27507400.0  162.17745  154.437801  153.346922  149.070591  40.929810
+        Date                                                                   ...                                                         
+        2024-11-07  133.070007  133.360001  3906400.0  134.800003  132.479996  ...  130.903124  130.035531  129.150186  1.035806  46.673107
+        2024-11-08  134.339996  133.449997  3465700.0  135.020004  133.199997  ...  131.088901  130.697756  130.323147  1.055966  49.220698
+        2024-11-11  133.000000  134.850006  2416862.0  135.222504  132.789993  ...  131.192204  131.051947  130.942071  1.056814  52.095027        
         '''
 
         # ====================================================
@@ -109,10 +110,10 @@ class StockModel:
 
         print(scaled_dataset.tail(3))
 
-                Adj Close   Volume      SMA_high    SMA_low     EMA_high    EMA_low   RSI_val
-        3736    0.684020    0.101248    0.995950    0.846819    0.838095    0.752214  0.378190
-        3737    0.706522    0.093295    0.995066    0.847204    0.836887    0.752720  0.436706
-        3738    0.697607    0.084623    0.994061    0.847477    0.835187    0.751681  0.399421
+                 Close      Open    Volume      High       Low  SMA_high   SMA_low  EMA_high   EMA_low  DEMA_val  ROCR_val   RSI_val
+        3737  0.470015  0.474406  0.052429  0.474656  0.479428  0.611327  0.794623  0.767184  0.738193  0.718186  0.483080  0.468294
+        3738  0.478107  0.474977  0.045042  0.476059  0.484025  0.614133  0.794876  0.768803  0.743686  0.727625  0.535304  0.495239
+        3739  0.469568  0.483866  0.027461  0.477350  0.481407  0.616873  0.794577  0.769702  0.746624  0.732606  0.537500  0.525640
         '''
         
         # ====================================================
@@ -154,6 +155,17 @@ class StockModel:
         x_valid, y_valid = self.create_sequences(valid_set)
         x_tests, y_tests = self.create_sequences(tests_set)
         
+        '''
+        Example of timeseries data shapes:
+
+        print(x_train.shape)
+
+        (2579, 30, 12)
+        
+        print(y_train.shape)
+        (2579, 10, 12)
+
+        '''
         # ====================================================
         # Create LSTM pipeline
         # ====================================================
@@ -213,9 +225,17 @@ class StockModel:
         # ====================================================
         # Reshape data for presentation
         # ====================================================
-        rescaled_predictions = self.inverse_transform(predictions)
-        rescaled_validations = self.inverse_transform(y_valid)
+        # Input: Timeseries shape (samples, horizon, features)
+        # Output: (samples, features) using the first horizon of every sample
+        rescaled_predictions = self.inverse_transform(
+            predictions[:,0:1].reshape(predictions.shape[0], predictions.shape[2]))
+        
+        rescaled_validations = self.inverse_transform(
+            y_valid[:,0:1].reshape(y_valid.shape[0], y_valid.shape[2]))
 
+        # ====================================================
+        # Plot metrics
+        # ====================================================
         self.plot_metrics(
             result,
             interactive,
@@ -240,14 +260,12 @@ class StockModel:
 
     def inverse_transform(self, data: np.array) -> pd.DataFrame:
         # ===========================================
-        # Reshapes predictions to the original dataframe
+        # Reshapes from timeseries to original dataframe
         # ===========================================
         # (samples, horizon, features) => (samples, features)
         return pd.DataFrame(
-            self.scaler.inverse_transform(
-                data.reshape(data.shape[0], data.shape[2])),
-                columns=self.dataset.columns
-            )
+            self.scaler.inverse_transform(data),
+                columns=self.dataset.columns)
 
     def predict(self) -> pd.DataFrame:
         # ===========================================
@@ -268,11 +286,13 @@ class StockModel:
         # ===========================================
         predictions = self.model.predict(x_predict)
 
-        # ===========================================
-        # Reshape predictions 
-        # ===========================================
-        # Shape needed is: (days, features)
-        rescaled_predictions = self.inverse_transform(predictions)
+        # ====================================================
+        # Reshape data for presentation
+        # ====================================================
+        # Input: Timeseries shape (samples, horizon, features)
+        # Output: (samples, features) using the first horizon of every sample
+        rescaled_predictions = self.inverse_transform(
+            predictions[:,0:1].reshape(predictions.shape[0], predictions.shape[2]))
 
         # ===========================================
         # Create a date range in the future
@@ -282,12 +302,12 @@ class StockModel:
         # Using the last day in the dataset +1 to be
         # the first day of prediction
         index = pd.date_range(self.dataset.index[-1], periods=rescaled_predictions.shape[0]+1)[1:]
-        # Set index 
+        # Apply index 
         return rescaled_predictions.set_index(index)
     
     def plot_metrics(self, results: any, interactive: bool, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
-        predictions_close = predictions['Adj Close']
-        validation_close = validation['Adj Close']
+        predictions_close = predictions['Close']
+        validation_close = validation['Close']
 
         self.fig = plt.figure(figsize=(20, 10), layout="constrained")
         spec = self.fig.add_gridspec(3, 4)

@@ -6,6 +6,7 @@ def main():
     parser = argparse.ArgumentParser(prog='train')
     parser.add_argument("--refresh", action="store_true", help="Download latest datasets")
     parser.add_argument("--list", action="store_true", help="List all available symbols")
+    parser.add_argument("--interactive", action="store_true", help="Display stats as dashboard")
     parser.add_argument('symbols', nargs='*', default=[], help='Stock symbols to build')
     args = parser.parse_args()
 
@@ -28,6 +29,6 @@ def main():
         print(f'Training {stock.get_company_name()} ({stock.get_symbol_name()})')
         # Create and save model
         model = StockModel(stock.get_data(), stock.get_symbol_name())
-        model.train_model(interactive=False).save_model()
+        model.train_model(interactive=args.interactive).save_model()
 main()
 

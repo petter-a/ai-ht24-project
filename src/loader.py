@@ -2,6 +2,7 @@ import kagglehub
 import pandas as pd
 import config
 import os
+import indicators
 from stock import Stock
 from typing import Self
 class Loader:
@@ -73,22 +74,30 @@ class Loader:
         # ===========================================
         # Create the technical indicators
         # =========================================== 
-        data['SMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=50).mean())
+        close = data.groupby('Symbol')['Close']
+
+        data['SMA_low'] = close.transform(
+            lambda x: indicators.calculate_SMA(x, 50))
         
-        data['SMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.rolling(window=200).mean())
+        data['SMA_high'] = close.transform(
+            lambda x: indicators.calculate_SMA(x, 200))
         
-        data['EMA_low'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.ewm(span=12, adjust=False).mean())
+        data['EMA_low'] = close.transform(
+            lambda x: indicators.calculate_EMA(x, 12))
 
-        data['EMA_high'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: x.ewm(span=36, adjust=False).mean())
+        data['EMA_high'] = close.transform(
+            lambda x: indicators.calculate_EMA(x, 36))
 
-        data['RSI_val'] = data.groupby('Symbol')['Adj Close'].transform(
-            lambda x: self.calculate_rsi(x, 14))
+        data['RSI_val'] = close.transform(
+            lambda x: indicators.calculate_RSI(x, 14))
 
-        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val']:
+        data['DEMA_val'] = close.transform(
+            lambda x: indicators.calculate_DEMA(x, 14))
+
+        data['ROCR_val'] = close.transform(
+            lambda x: indicators.calculate_ROCR(x, 5))
+
+        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val', 'DEMA_val', 'ROCR_val']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
             # In cases where backfill cannot take place (A coluymn with only NaN)
@@ -96,11 +105,3 @@ class Loader:
             data[column] = data.groupby('Symbol')[column].bfill().fillna(0)
 
         return data
-
-    def calculate_rsi(self, data: pd.DataFrame, window: int) -> pd.DataFrame: 
-        delta = data.diff()        
-
-        gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-        rs = gain / loss
-        return 100 - (100 / (1 + rs))

@@ -32,10 +32,10 @@ class Stock:
         return result
 
     def get_average_price(self, range: DateRange = None) -> pd.Float64Dtype:
-        return np.average(self.get_data_range(self.data, range)['Adj Close'])
+        return np.average(self.get_data_range(self.data, range)['Close'])
     
     def get_price(self, range: DateRange = None) -> pd.Series:
-        return self.get_data_range(self.data, range)['Adj Close']
+        return self.get_data_range(self.data, range)['Close']
 
     def get_volume(self, range: DateRange = None) -> pd.Series:
         return self.get_data_range(self.data, range)["Volume"]
@@ -64,6 +64,6 @@ class Stock:
         return max(self.data.index)
     
     def get_closing_price(self) -> str:
-        return self.data.iloc[-1]['Adj Close']
+        return self.data.iloc[-1]['Close']
     
     def get_data(self) -> pd.DataFrame: return self.data

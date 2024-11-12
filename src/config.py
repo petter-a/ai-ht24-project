@@ -8,5 +8,3 @@ type DateRange = tuple[pd.Timestamp | None, pd.Timestamp | None]
 source_path = os.path.dirname(os.path.abspath(__file__))
 models_path = f'{source_path}/../models'
 data_path = f'{source_path}/../data'
-
-

@@ -1,6 +1,7 @@
 from loader import Loader 
 from model import StockModel
 from plot import Plot
+import pandas as pd
 
 import argparse
 
@@ -24,10 +25,13 @@ def main():
     if args.symbols == []:
         parser.print_help()
     
+    today = pd.to_datetime("today")
+    three_months_ago = today - pd.DateOffset(months=3)
+
     for symbol in args.symbols:
         stock = loader.get_stock(symbol)        
         
         # Create and save model
-        Plot(stock, ('2024-10-01', '2024-11-01')).draw()
+        Plot(stock, (three_months_ago, None)).draw()
 main()
 
