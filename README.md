@@ -65,3 +65,16 @@ These challenges will be adressed during the implementation phase.
 The planned deliverable for the project scope is a program that allows the user to choose a particular stock
 from the S&P 500 index and retreive an analysis of the historical data and future predictions together with recommendations
 given predefined thresholds.
+
+# Train model
+
+```
+python3 src/train.py MMM --interactive --refresh
+
+```
+
+# Predict stock price
+
+```
+python3 src/predict.py MMM
+```
