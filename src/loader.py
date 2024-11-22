@@ -97,10 +97,13 @@ class Loader:
         data['ROCR_val'] = close.transform(
             lambda x: indicators.calculate_ROCR(x, 5))
 
-        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val', 'DEMA_val', 'ROCR_val']:
+        data['HURST_val'] = close.transform(
+            lambda x: indicators.calculate_HURST(x.values, 50))
+
+        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val', 'DEMA_val', 'ROCR_val', 'HURST_val']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
-            # In cases where backfill cannot take place (A coluymn with only NaN)
+            # In cases where backfill cannot take place (A column with only NaN)
             # Fallback to '0'
             data[column] = data.groupby('Symbol')[column].bfill().fillna(0)
 

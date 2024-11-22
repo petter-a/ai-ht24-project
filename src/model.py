@@ -10,22 +10,42 @@ from keras import Input
 from keras.models import Sequential
 from keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.layers import LSTM, Dense, Dropout, TimeDistributed, RepeatVector
-from tensorflow.keras.losses import MeanAbsoluteError
+from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras import backend as K
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
+import keras_tuner
 
 # Algorithm for calculating Symmetric Mean Absolute Percentage Error
 @keras.saving.register_keras_serializable()
+def metric_aggregated(y_true, y_pred):
+    return (
+        keras.losses.mean_squared_error(y_true, y_pred) -
+        metric_r2score(y_true, y_pred))
+
+@keras.saving.register_keras_serializable()
 def metric_smape(y_true, y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+
     epsilon = 1e-10 
     diff = tf.abs(y_true - y_pred)
     scale = tf.abs(y_true) + tf.abs(y_pred) + epsilon
     return 200 * tf.reduce_mean(diff / scale)
 
+@keras.saving.register_keras_serializable()
+def metric_rmse(y_true, y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    
+    return K.sqrt(K.mean(K.square(y_pred - y_true)))
+
 # Algorithm for calculating Coefficient of Determination
 @keras.saving.register_keras_serializable()
 def metric_r2score(y_true, y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+
     SS_res = tf.reduce_sum(tf.square(y_true - y_pred))
     SS_tot = tf.reduce_sum(tf.square(y_true - tf.reduce_mean(y_true)))
     return 1 - SS_res / (SS_tot + tf.keras.backend.epsilon())
@@ -36,17 +56,13 @@ class StockModel:
         # ====================================================
         # Configuration
         # ====================================================
-        self.train_size = 0.7   # The size of the training data in percentage
-        self.valid_size = 0.15  # The size of the validation data in percentage
-        self.steps = 30         # The historically observed datapoints (days)
-        self.horizon = 10        # The number of future datapoints to predict
-        self.learning_rate = 0.0001 # The learning rate of the model
-        self.epocs = 100        # The maximum number of epocs
-        self.batchsize = self.steps
-        self.units = 50
-        self.patience = 6
+        self.train_size = 0.7   # The size of the training data as percentage of total datasize
+        self.valid_size = 0.15  # The size of the validation data as percentage of total datasize
+        self.steps = 20         # The historically observed datapoints (days)
+        self.batchsize = 24
+        self.patience = 4
+        self.epochs = 100       # The maximum number of epocs
         self.name = name        # The unique name of the symbol
-
         # ====================================================
         # Dashboard
         # ====================================================
@@ -79,42 +95,18 @@ class StockModel:
             'Close',
             'Open', 'Volume',
             'High', 'Low',
-            'SMA_high', 'SMA_low',
-            'EMA_high', 'EMA_low',
             'DEMA_val', 'ROCR_val',
-            'RSI_val'
+            'HURST_val'
             ]]
         
         self.features = len(self.dataset.columns)
         
-    def train_model(self, interactive: bool = True) -> Self:
-        '''
-        Example input dataset. Shape: (Samples, Features):
-        
-        print(self.dataset.tail(3))
-
-        Date                                                                   ...                                                         
-        2024-11-07  133.070007  133.360001  3906400.0  134.800003  132.479996  ...  130.903124  130.035531  129.150186  1.035806  46.673107
-        2024-11-08  134.339996  133.449997  3465700.0  135.020004  133.199997  ...  131.088901  130.697756  130.323147  1.055966  49.220698
-        2024-11-11  133.000000  134.850006  2416862.0  135.222504  132.789993  ...  131.192204  131.051947  130.942071  1.056814  52.095027        
-        '''
-
+    def train_model(self, interactive: bool = True) -> Self:   
         # ====================================================
         # Fit the transform to training data
         # ====================================================
-        scaled_dataset = pd.DataFrame(self.scaler.fit_transform(
-            self.dataset), columns=self.dataset.columns)
-
-        '''
-        Example scaled data:
-
-        print(scaled_dataset.tail(3))
-
-                 Close      Open    Volume      High       Low  SMA_high   SMA_low  EMA_high   EMA_low  DEMA_val  ROCR_val   RSI_val
-        3737  0.470015  0.474406  0.052429  0.474656  0.479428  0.611327  0.794623  0.767184  0.738193  0.718186  0.483080  0.468294
-        3738  0.478107  0.474977  0.045042  0.476059  0.484025  0.614133  0.794876  0.768803  0.743686  0.727625  0.535304  0.495239
-        3739  0.469568  0.483866  0.027461  0.477350  0.481407  0.616873  0.794577  0.769702  0.746624  0.732606  0.537500  0.525640
-        '''
+        scaled_dataset = self.scaler.fit_transform(
+            self.dataset)
         
         # ====================================================
         # Split data between training, validation and test
@@ -132,106 +124,105 @@ class StockModel:
             scaled_dataset[valid_size:]
         )
 
-        '''
-        print(len(train_set))
-        2613
-
-        print(len(valid_set))
-        560
-
-        print(len(tests_set))
-        561
-
-        '''
         # ====================================================
-        # Create timeseries for training 
+        # Create timeseries
         # ====================================================
-        # The shape of the return values constitutes:
-        #
-        # x: (samples, timesteps, features)
-        # y: (samples, horizon, features) 
-        # 
         x_train, y_train = self.create_sequences(train_set)
         x_valid, y_valid = self.create_sequences(valid_set)
         x_tests, y_tests = self.create_sequences(tests_set)
         
-        '''
-        Example of timeseries data shapes:
-
-        print(x_train.shape)
-
-        (2579, 30, 12)
-        
-        print(y_train.shape)
-        (2579, 10, 12)
-
-        '''
         # ====================================================
         # Create LSTM pipeline
         # ====================================================
-        # RepeatVector is used for MultiStep prediction
-        self.model = Sequential([
-            Input(shape=(self.steps, self.features)),
-            LSTM(self.units, activation='relu'),
-            Dropout(0.2),
-            RepeatVector(self.horizon),
-            LSTM(self.units, activation='relu', return_sequences=True),
-            Dropout(0.2),
-            TimeDistributed(Dense(self.features))
-        ])
+        def build_model(hp):
+            units = hp.Int('units',  min_value=32, max_value=112, step=16)
+            learning_rate = hp.Float("learning_rate", min_value=1e-4, max_value=1e-2, sampling="log")
+            
+            model = Sequential([
+                Input(shape=(self.steps, self.features)),
+                LSTM(units, activation='relu'),
+                Dense(self.features)
+            ])
+            # ====================================================
+            # Compile model
+            # ====================================================
+            model.compile( 
+                optimizer=Adam(learning_rate=learning_rate),
+                loss=metric_aggregated,
+                metrics=[
+                    'mse',
+                    'mae',
+                    metric_smape,
+                    metric_r2score,
+                    metric_rmse
+                ])
+            return model
+                
         # ====================================================
-        # Compile model
+        # Create tuner
         # ====================================================
-        self.model.compile(optimizer=Adam(learning_rate=self.learning_rate), 
-            loss=MeanAbsoluteError(), 
-            metrics=[
-                'mse',
-                metric_smape,
-                metric_r2score])
-    
+        tuner = keras_tuner.GridSearch(
+            build_model,
+            tune_new_entries=True,
+            objective='val_loss',
+            overwrite=False,
+            directory="./tuning",
+            project_name=self.name
+        )
         # ====================================================
         # Create stopping function to avoid overfitting
         # ====================================================
         early_stopping = EarlyStopping(
-            monitor='val_loss', 
+            monitor='val_loss',
             patience=self.patience, 
             restore_best_weights=True)
+
+        # ====================================================
+        # Perform search
+        # ====================================================
+        tuner.search(x_train, y_train, 
+            epochs=15, 
+            validation_data=(x_valid, y_valid), 
+            batch_size=self.batchsize)
+        
+        # Retrain best model
+        best_hp = tuner.get_best_hyperparameters()[0]
+        self.model = tuner.hypermodel.build(best_hp)
 
         # ====================================================
         # Train the model
         # ====================================================
         result = self.model.fit(
-            x_train, 
-            y_train, 
-            epochs=self.epocs, 
-            batch_size=self.batchsize, 
+            x_train,
+            y_train,
+            batch_size=self.batchsize,
+            epochs=self.epochs,
             validation_data=(x_valid, y_valid),
             callbacks=[early_stopping],
-            verbose=2)
+            verbose=1
+        )
         
         # ====================================================
         # Evaluate model
         # ====================================================
         eval_metrics = self.model.evaluate(x_tests, y_tests)
         
-        for i, metric in enumerate(eval_metrics):
-            print(f'Metric-{i}: {metric}')
-                
         # ====================================================
-        # Make predictions on validation data
-        # ====================================================
-        predictions = self.model.predict(x_valid)
+        # Debug print - Training result
+        # ====================================================        
+        self.print_metrics(eval_metrics, best_hp.values)
 
         # ====================================================
-        # Reshape data for presentation
+        # Make predictions on validation data
+        # ====================================================    
+        predi_set = self.model.predict(x_tests)
+
         # ====================================================
-        # Input: Timeseries shape (samples, horizon, features)
-        # Output: (samples, features) using the first horizon of every sample
-        rescaled_predictions = self.inverse_transform(
-            predictions[:,0:1].reshape(predictions.shape[0], predictions.shape[2]))
-        
-        rescaled_validations = self.inverse_transform(
-            y_valid[:,0:1].reshape(y_valid.shape[0], y_valid.shape[2]))
+        # Debug print
+        # ====================================================        
+        self.print_frame(self.dataset, 'Original')
+        self.print_frame(self.convert_to_frame(scaled_dataset), 'Scaled')
+        self.print_frame(self.convert_to_frame(predi_set), 'Predictions')
 
         # ====================================================
         # Plot metrics
@@ -239,24 +230,23 @@ class StockModel:
         self.plot_metrics(
             result,
             interactive,
-            [len(train_set), len(valid_set), len(tests_set)],
             eval_metrics,
-            rescaled_predictions,
-            rescaled_validations)
-
+            (
+                train_set,
+                valid_set,
+                tests_set,
+                predi_set,
+            )
+        )
         return self
 
     def create_sequences(self, data: np.array) -> tuple[np.array, np.array]:
-        # ====================================================
-        # Timeseries fit for LSTM
-        # ====================================================
-        x, y = [], []
+        X, y = [], []
 
-        for i in range(len(data) - self.steps - self.horizon +1):
-            x.append(data[i:i + self.steps])
-            y.append(data[i + self.steps:i + self.steps + self.horizon])
-
-        return np.array(x), np.array(y)
+        for i in range(len(data) - self.steps):
+            X.append(data[i:i + self.steps, :])
+            y.append(data[i + self.steps, :])
+        return np.array(X), np.array(y)
 
     def inverse_transform(self, data: np.array) -> pd.DataFrame:
         # ===========================================
@@ -267,24 +257,58 @@ class StockModel:
             self.scaler.inverse_transform(data),
                 columns=self.dataset.columns)
 
-    def predict(self) -> pd.DataFrame:
-        # ===========================================
-        # Scale to fit 0 - 1
-        # ===========================================
-        # Extract the last N days from the most recent dataset
-        scaled_dataset = pd.DataFrame(self.scaler.transform(
-            self.dataset[-(self.steps*3):]), columns=self.dataset.columns)
+    def convert_to_frame(self, data: np.array) -> pd.DataFrame:
+        return pd.DataFrame(data, columns=self.dataset.columns)
 
-        # ===========================================
-        # Reshape scaled data
-        # ===========================================
-        # Shape needed is: (Samples, steps, features)
-        x_predict, _ = self.create_sequences(scaled_dataset.values)
-        
-        # ===========================================
-        # Perform prediction
-        # ===========================================
-        predictions = self.model.predict(x_predict)
+    def print_frame(self, data: pd.DataFrame, name: str):
+        print('\n=========================================')
+        print(f'Dataset: {name}')
+        print('=========================================\n')
+        print(data.tail(10))
+
+    def print_metrics(self, data: list, hp: dict):
+        print('\n=========================================')
+        print('Hyperparameters')
+        print('=========================================\n')
+        print(f'Units:\t{hp['units']}')
+        print(f'Rate:\t{hp['learning_rate']}')
+
+        print('\n=========================================')
+        print('Metrics')
+        print('=========================================\n')
+        print(f'Loss:\t{data[0]}')
+        print(f'MSE:\t{data[1]}')
+        print(f'MAE:\t{data[2]}')
+        print(f'SMAPE:\t{data[3]}')
+        print(f'R2Score:\t{data[4]}')
+        print(f'RMSE:\t{data[4]}')
+
+
+    def print_predictions(self, data: np.array, metrics: list):
+        print(f'\nClosing values:\n\n{
+            self.dataset.tail(1)
+        }')
+
+        print(f'\nPredicted values (By day):\n\n{
+            data
+        }')
+
+        self.print_metrics(metrics)
+
+    def predict(self, days: int = 30) -> pd.DataFrame:
+        # ====================================================
+        # Scale data
+        # ====================================================
+        scaled_dataset = self.scaler.fit_transform(self.dataset)
+    
+        predictions = scaled_dataset[-self.steps:]
+
+        for _ in range(days):
+            x = predictions[-self.steps:]
+            x = x.reshape((1, self.steps, self.features))
+            out = self.model.predict(x)
+            predictions = np.append(predictions, out, axis=0)
+        predictions = predictions[self.steps-1:]
 
         # ====================================================
         # Reshape data for presentation
@@ -292,7 +316,31 @@ class StockModel:
         # Input: Timeseries shape (samples, horizon, features)
         # Output: (samples, features) using the first horizon of every sample
         rescaled_predictions = self.inverse_transform(
-            predictions[:,0:1].reshape(predictions.shape[0], predictions.shape[2]))
+            predictions)
+
+        '''
+        predictions = train_set[-self.steps:].reshape((-1))
+
+        for _ in range(30):
+            x = predictions[-self.steps:]
+            x = x.reshape((1, self.steps, self.features))
+            out = self.model.predict(x)[0][0]
+            predictions = np.append(predictions, out)
+        predictions = predictions[self.steps-1:]
+        # ====================================================
+        # Reshape data for presentation
+        # ====================================================
+        # Input: Timeseries shape (samples, horizon, features)
+        # Output: (samples, features) using the first horizon of every sample
+        rescaled_predictions = pd.DataFrame(predictions)
+
+        # ====================================================
+        # Print prognosis
+        # ====================================================
+        self.print_predictions(
+            predi, eval_metrics
+        )
+        '''    
 
         # ===========================================
         # Create a date range in the future
@@ -305,40 +353,39 @@ class StockModel:
         # Apply index 
         return rescaled_predictions.set_index(index)
     
-    def plot_metrics(self, results: any, interactive: bool, sizes: list, evaluation: list, predictions: pd.array, validation: pd.array):
-        predictions_close = predictions['Close']
-        validation_close = validation['Close']
+    def plot_metrics(self, results: any, interactive: bool, evaluation: list, data: tuple[np.array, np.array, np.array, np.array]):
+        (train, valid, tests, predi) = data
 
         self.fig = plt.figure(figsize=(20, 10), layout="constrained")
         spec = self.fig.add_gridspec(3, 4)
 
         ax = self.fig.add_subplot(spec[0, :])
         self.fig.suptitle(self.name)
-        ax.plot(validation_close, label="True Values")
-        ax.plot(predictions_close, label="Predictions")
+        ax.plot(tests[:,0], label="Test Values")
+        ax.plot(predi[:,0], label="Predictions")
         ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
         ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
         ax.grid(True)
         ax.legend()
 
         ax = self.fig.add_subplot(spec[1, 0])
-        ax.set_title("Loss (MAE)")
+        ax.set_title("Loss (MSE)")
         ax.plot(results.epoch, results.history['loss'], label=f'Train: {np.mean(results.history['loss']):.4f}')
         ax.plot(results.epoch, results.history['val_loss'], label=f'Validation: {np.mean(results.history['val_loss']):.4f}')
         ax.legend()
 
         ax = self.fig.add_subplot(spec[1, 1])
         ax.set_title("Root Mean Square Error")
-        ax.plot(results.epoch, tf.sqrt(results.history['mse']), label=f'Train: {np.mean(tf.sqrt(results.history['mse'])):.4f}')
-        ax.plot(results.epoch, tf.sqrt(results.history['val_mse']), label=f'Validation: {np.mean(tf.sqrt(results.history['val_mse'])):.4f}')
+        ax.plot(results.epoch, tf.sqrt(results.history['metric_rmse']), label=f'Train: {np.mean(tf.sqrt(results.history['metric_rmse'])):.4f}')
+        ax.plot(results.epoch, tf.sqrt(results.history['val_metric_rmse']), label=f'Validation: {np.mean(tf.sqrt(results.history['val_metric_rmse'])):.4f}')
         ax.legend()
 
         ax = self.fig.add_subplot(spec[1, 2])
-        ax.set_title("Mean Square Error")
-        ax.plot(results.epoch, results.history['mse'], label=f'Train: {np.mean(results.history['mse']):.4f}')
-        ax.plot(results.epoch, results.history['val_mse'], label=f'Validation: {np.mean(results.history['val_mse']):.4f}')
+        ax.set_title("Mean Absolut Error")
+        ax.plot(results.epoch, results.history['mae'], label=f'Train: {np.mean(results.history['mae']):.4f}')
+        ax.plot(results.epoch, results.history['val_mae'], label=f'Validation: {np.mean(results.history['val_mae']):.4f}')
         ax.legend()
-
+        
         ax = self.fig.add_subplot(spec[1, 3])
         ax.set_title("Symmetric Mean Absolute Percentage Error")
         ax.plot(results.epoch, results.history['metric_smape'], label=f'Train: {np.mean(results.history['metric_smape']):.4f}')
@@ -353,15 +400,13 @@ class StockModel:
 
         ax = self.fig.add_subplot(spec[2, 1])
         ax.set_title("Training data")
-        ax.pie(sizes, labels=sizes)
-        ax.legend()
+        ax.pie([len(train), len(valid), len(tests)] , labels=[f'Train: {len(train)}', f'Valid: {len(valid)}', f'Test: {len(tests)}'])
 
         ax = self.fig.add_subplot(spec[2, 2])
         ax.set_title("Test evaluation")
-        ax.bar(['a', 'b', 'c', 'd'], evaluation)
-        for i, v in enumerate(evaluation):
-            ax.text(i, v, f"{v:.4f}", ha='center', va='bottom')
-
+        ax.axis("off")
+        ax.table(rowLabels=['Loss', 'MSE', 'MAE', 'SMAPE', 'R2Score', 'RMSE'], cellText=[['%.4f' % x] for x in evaluation], loc='center')
+        
         if interactive:
             plt.show(block=True)
 
