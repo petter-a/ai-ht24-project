@@ -166,7 +166,7 @@ class StockModel:
             tune_new_entries=True,
             objective='val_loss',
             overwrite=False,
-            directory="./tuning",
+            directory=config.tuner_path,
             project_name=self.name
         )
         # ====================================================
@@ -390,12 +390,12 @@ class StockModel:
         if interactive:
             plt.show(block=True)
 
-    def load_model(self, path: str = config.models_path) -> Self:
+    def load_model(self, path: str = config.model_path) -> Self:
         self.model = keras.saving.load_model(f'{path}/{self.name}.keras')
         self.scaler = joblib.load(f'{path}/{self.name}.save')
         return self
 
-    def save_model(self, path: str = config.models_path) -> Self:
+    def save_model(self, path: str = config.model_path) -> Self:
         if self.model != None:
             self.model.save(f'{path}/{self.name}.keras')
             joblib.dump(self.scaler, f'{path}/{self.name}.save')

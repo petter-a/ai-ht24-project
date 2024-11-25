@@ -11,22 +11,37 @@ class Loader:
         self.stocks = None
         self.index = None
 
-    def create_preprocessed_data(self, data_path: str = config.data_path) -> Self:
+    def create_preprocessed_data(self, cache_path: str = config.cache_path) -> Self:
+        print('Downloading datasets ....')
         # ====================================================
         # Download datasets from kagglehub (Updated daily)
         # ====================================================
         path = kagglehub.dataset_download("andrewmvd/sp-500-stocks")
-        self.index = pd.read_csv(f'{path}/sp500_index.csv', index_col="Date", parse_dates=["Date"])
-        self.companies = pd.read_csv(f'{path}/sp500_companies.csv', index_col="Symbol")        
-        self.stocks = self.preprocess_stock_data(
-            pd.read_csv(f'{path}/sp500_stocks.csv', index_col="Date", parse_dates=["Date"])
+
+        # ====================================================
+        # Read and pre-process data
+        # ====================================================
+        self.index = pd.read_csv(
+            f'{path}/sp500_index.csv', 
+            index_col="Date", 
+            parse_dates=["Date"]
         )
+        self.companies = pd.read_csv(
+            f'{path}/sp500_companies.csv', 
+            index_col="Symbol"
+        )        
+        stock_data = pd.read_csv(
+            f'{path}/sp500_stocks.csv', 
+            index_col="Date", 
+            parse_dates=["Date"]
+        )
+        self.stocks = self.preprocess_stock_data(stock_data)
         
         # ====================================================
         # Create output directory
         # ====================================================
-        if not (os.path.exists(data_path) and os.path.isdir(data_path)):
-            os.mkdir(data_path)
+        if not (os.path.exists(cache_path) and os.path.isdir(cache_path)):
+            os.mkdir(cache_path)
         
         # ====================================================
         # Cache preprocessed data
@@ -35,18 +50,19 @@ class Loader:
         # the result to disk improves operations on subsequent
         # calls.
 
-        self.index.to_csv(f'{data_path}/sp500_index.csv')
-        self.companies.to_csv(f'{data_path}/sp500_companies.csv')
-        self.stocks.to_csv(f'{data_path}/sp500_stocks.csv')
+        self.index.to_csv(f'{cache_path}/sp500_index.csv')
+        self.companies.to_csv(f'{cache_path}/sp500_companies.csv')
+        self.stocks.to_csv(f'{cache_path}/sp500_stocks.csv')
         return self
 
-    def load_preprocessed_data(self, data_path: str = config.data_path) -> Self:
+    def load_preprocessed_data(self, cache_path: str = config.cache_path) -> Self:
+        print('Loading data from cache ....')
         # ====================================================
         # Read preprocessed data from file
         # ====================================================
-        self.index = pd.read_csv(f'{data_path}/sp500_index.csv', index_col="Date", parse_dates=["Date"])
-        self.companies = pd.read_csv(f'{data_path}/sp500_companies.csv', index_col="Symbol")
-        self.stocks = pd.read_csv(f'{data_path}/sp500_stocks.csv', index_col="Date", parse_dates=["Date"])
+        self.index = pd.read_csv(f'{cache_path}/sp500_index.csv', index_col="Date", parse_dates=["Date"])
+        self.companies = pd.read_csv(f'{cache_path}/sp500_companies.csv', index_col="Symbol")
+        self.stocks = pd.read_csv(f'{cache_path}/sp500_stocks.csv', index_col="Date", parse_dates=["Date"])
         return self
 
     def get_company_info(self, symbol: str) -> pd.DataFrame:
@@ -62,11 +78,9 @@ class Loader:
         
     def get_stock(self, symbol: str) -> Stock:
         return Stock(self.get_company_info(symbol), self.get_stock_data(symbol))
-
-    def get_symbols(self) -> list:
-        return list(map(lambda x: self.get_stock(x), self.stocks['Symbol'].unique()))
     
     def preprocess_stock_data(self, data: pd.DataFrame) -> pd.DataFrame:
+        print('Pre-processing data ....')
         # ===========================================
         # Make sure data is sorted by Date
         # =========================================== 
