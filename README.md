@@ -126,6 +126,8 @@ tuning/
     MSFT/*
 ```
 
+![Stock price training!](./images/train.png "Stock price training")
+
 ## Example: Finding stock symbols
 
 ```bash
