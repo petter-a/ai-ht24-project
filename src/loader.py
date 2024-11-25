@@ -80,7 +80,7 @@ class Loader:
         return self.companies[self.companies.index == symbol]
 
     def list_companies(self) -> list:
-        return self.companies.sort_index().to_string(columns=['Shortname'])
+        return self.companies.sort_index()
 
     def get_stock_data(self, symbol: str = None) -> pd.DataFrame:
         if None != symbol:

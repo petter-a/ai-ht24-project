@@ -24,7 +24,7 @@ def main():
     # List companies
     # ====================================================
     if args.list:
-        print(loader.list_companies())
+        print(loader.list_companies().to_string(columns=['Shortname']))
         exit(0)
 
     # ====================================================
