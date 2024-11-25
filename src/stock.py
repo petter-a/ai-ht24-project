@@ -41,9 +41,8 @@ class Stock:
         return self.get_data_range(self.data, range)["Volume"]
 
     def get_predicted_price(self) -> pd.DataFrame:
-        p = StockModel(self.data, self.get_symbol_name())
-        p.load_model()  
-        return p.predict()
+        model = StockModel(self.data, self.get_symbol_name()).load_model()
+        return model.predict()
     
     def get_sma_high(self, range: DateRange = None) -> pd.Series:
         return self.get_data_range(self.data['SMA_high'], range)

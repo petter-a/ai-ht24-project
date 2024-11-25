@@ -45,7 +45,7 @@ Two additional auxiliary datasets are used to provide detailed company informati
 # Method
 
 Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained quite frequently.
-Initially based on a single feature (Closing price) but eventually more features like volume and volatility or other external data
+Initially based on a single feature (Closing price) but eventually more features like volume and volatility. or other external data
 that I can find that might strengthen the prognosis. An example is the SEK/USD exchange rates (which is available as download through
 [Riksbanken](https://www.riksbank.se/en-gb/statistics/interest-rates-and-exchange-rates/search-interest-rates-and-exchange-rates/)).
 
@@ -66,15 +66,87 @@ The planned deliverable for the project scope is a program that allows the user 
 from the S&P 500 index and retreive an analysis of the historical data and future predictions together with recommendations
 given predefined thresholds.
 
-# Train model
+# Training
+
+The training module fits a stock unique model to the latest available data.
+Since data pre-processing is a quite compute intensive measure, the resulting data
+files will be cached and available for reuse if re-training takes place. Using the
+flag "fromcache" will try to load data locally. However, new data becomes available
+every 24h; hence this flag should not be used in a production environment where the
+latest source data is always prefered.
+
+The generated models (and transforms) are outputted to the /models folder of the project.
+For convenience, an image of the training statistics is also created in the same folder.
+All files are named by its stock symbol name.
+
+Note that GridSearch is used internally to choose the best learning rate and batch size.
+
+If the script is run with the "interactive" flag, the statistics is also displayed after each succesful fit.
+This is a blocking measure and should be avoided when the script is run in a batch fashion.
+
+```bash
+usage: train [-h] [--fromcache] [--list] [--interactive] [symbols ...]
+
+positional arguments:
+  symbols        Stock symbols to build
+
+options:
+  -h, --help     show this help message and exit
+  --fromcache    Use pre-processed data (if available)
+  --list         List all available symbols
+  --interactive  Display stats as dashboard
+```
+
+## Example: Training models for the 3M and Microsoft stocks
+
+```bash
+python3 src/train.py MMM MSFT --interactive
+```
+
+Files generated on a fresh installation
+
+```bash
+models/
+    MMM.keras  # Keras model
+    MMM.save   # Transformer fitting params
+    MMM.png    # Statistics
+    MSFT.keras  # Keras model
+    MSFT.save   # Transformer fitting params
+    MSFT.png    # Statistics
+
+# Pre-processed data cache files
+data/
+    sp500_companies.csv
+    sp500_index.csv
+    sp500_stocks.csv
+
+# GridSearch cache files
+tuning/
+    MMM/*
+    MSFT/*
+```
+
+## Example: Finding stock symbols
+
+```bash
+python3 src/train.py --list --fromcache
+```
+
+Output:
 
 ```
-python3 src/train.py MMM --interactive --refresh
-
-```
-
-# Predict stock price
-
-```
-python3 src/predict.py MMM
+                              Shortname
+Symbol
+A            Agilent Technologies, Inc.
+AAPL                         Apple Inc.
+ABBV                        AbbVie Inc.
+ABNB                       Airbnb, Inc.
+ABT                 Abbott Laboratories
+ACGL            Arch Capital Group Ltd.
+ACN                       Accenture plc
+ADBE                         Adobe Inc.
+ADI                Analog Devices, Inc.
+ADM      Archer-Daniels-Midland Company
+ADP     Automatic Data Processing, Inc.
+...
 ```
