@@ -60,7 +60,7 @@ class StockModel:
         self.valid_size = 0.15  # The size of the validation data as percentage of total datasize
         self.steps = 20         # The historically observed datapoints (days)
         self.batchsize = 24
-        self.patience = 4
+        self.patience = 6
         self.epochs = 100       # The maximum number of epocs
         self.name = name        # The unique name of the symbol
         # ====================================================
@@ -95,6 +95,8 @@ class StockModel:
             'Close',
             'Open', 'Volume',
             'High', 'Low',
+            'SMA_low', 'SMA_high',
+            'EMA_low', 'EMA_high',
             'DEMA_val', 'ROCR_val',
             'HURST_val'
             ]]
