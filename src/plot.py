@@ -21,14 +21,14 @@ class Plot:
 
     def draw(self):
         self.plot_stock_price()
-        self.plot_stock_prediction()
+        self.plot_volume()
         self.plot_sma200()
         self.plot_sma50()
         self.plot_mean_price()
         self.plot_max_price()
         self.plot_min_price()
         self.plot_rsi()
-        self.plot_volume()
+        self.plot_stock_prediction()
         self.axs[0].legend()
         plt.show(block=True)
 
@@ -41,10 +41,14 @@ class Plot:
         prices = self.stock.get_predicted_price()
         self.axs[0].axvline(prices.index[0])
         self.axs[0].plot(prices['Close'], color='green', label='Predicted Price', linestyle=(0,(2,2)))
+        (bottom, top) = self.axs[0].get_ylim()
+        self.axs[0].text(prices.index[0], top - ((top - bottom)/2), 'Future', rotation=90, verticalalignment='center')
 #        self.axs[0].plot(prices['SMA_high'], color='red', label='SMA 200', linestyle="dotted")
 #        self.axs[0].plot(prices['SMA_low'], color='blue', label='SMA 50', linestyle="dotted")
         self.axs[2].axvline(prices.index[0])
-        self.axs[2].bar(prices['Volume'].index, prices['Volume'], color='grey', label='Predicted Volume')
+        self.axs[2].bar(prices.index, prices['Volume'], color='grey', label='Predicted Volume')
+        (bottom, top) = self.axs[2].get_ylim()
+        self.axs[2].text(prices.index[0], top - ((top - bottom)/2), 'Future', rotation=90, verticalalignment='center')
 
     def plot_max_price(self):
         prices = self.stock.get_price(self.range)
