@@ -76,6 +76,9 @@ class Loader:
         )
         return self
 
+    def is_valid_symbol(self, symbol: str) -> bool:
+        return not self.companies[self.companies.index == symbol].empty
+
     def get_company_info(self, symbol: str) -> pd.DataFrame:
         return self.companies[self.companies.index == symbol]
 

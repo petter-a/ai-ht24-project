@@ -38,6 +38,10 @@ def main():
     # Perform training
     # ====================================================
     for symbol in args.symbols:
+        if not loader.is_valid_symbol(symbol):
+            print(f'Unknown symbol {symbol}')
+            continue
+
         stock = loader.get_stock(symbol)        
         
         print(f'Training {stock.get_company_name()} ({stock.get_symbol_name()})')

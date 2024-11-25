@@ -40,9 +40,13 @@ def main():
     three_months_ago = today - pd.DateOffset(months=3)
 
     for symbol in args.symbols:
+        if not loader.is_valid_symbol(symbol):
+            print(f'Unknown symbol {symbol}')
+            continue
+
         stock = loader.get_stock(symbol)        
         
-        # Create and save model
+        # Plot prediction
         Plot(stock, (three_months_ago, None)).draw()
 main()
 
