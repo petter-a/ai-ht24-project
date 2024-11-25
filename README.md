@@ -79,7 +79,7 @@ The generated models (and transforms) are outputted to the /models folder of the
 For convenience, an image of the training statistics is also created in the same folder.
 All files are named by its stock symbol name.
 
-Note that GridSearch is used internally to choose the best learning rate and batch size.
+Note that GridSearch is used internally to choose the best learning rate and unit size.
 
 If the script is run with the "interactive" flag, the statistics is also displayed after each succesful fit.
 This is a blocking measure and should be avoided when the script is run in a batch fashion.
@@ -150,3 +150,28 @@ ADM      Archer-Daniels-Midland Company
 ADP     Automatic Data Processing, Inc.
 ...
 ```
+
+# Prediction
+
+Stock price prediction using a trained model will generate a dashboard displaying 3 months of historical data
+combined with 30 days of predicted future prices.
+
+```bash
+usage: predict.py [-h] [--fromcache] [--list] [symbols ...]
+
+positional arguments:
+  symbols      Stock symbols to predict
+
+options:
+  -h, --help   show this help message and exit
+  --fromcache  Use pre-processed data (if available)
+  --list       List all available symbols
+```
+
+## Example: Predicting stock price
+
+```bash
+python3 src/predict.py MMM
+```
+
+![Stock price prediction!](./images/predict.png "Stock price prediction")

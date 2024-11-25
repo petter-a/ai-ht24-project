@@ -253,9 +253,8 @@ class StockModel:
         # Reshapes from timeseries to original dataframe
         # ===========================================
         # (samples, horizon, features) => (samples, features)
-        return pd.DataFrame(
-            self.scaler.inverse_transform(data),
-                columns=self.dataset.columns)
+        return self.convert_to_frame(
+            self.scaler.inverse_transform(data))
 
     def convert_to_frame(self, data: np.array) -> pd.DataFrame:
         return pd.DataFrame(data, columns=self.dataset.columns)
@@ -284,7 +283,7 @@ class StockModel:
         print(f'RMSE:\t{data[4]}')
 
 
-    def print_predictions(self, data: np.array, metrics: list):
+    def print_predictions(self, data: np.array):
         print(f'\nClosing values:\n\n{
             self.dataset.tail(1)
         }')
@@ -292,8 +291,6 @@ class StockModel:
         print(f'\nPredicted values (By day):\n\n{
             data
         }')
-
-        self.print_metrics(metrics)
 
     def predict(self, days: int = 30) -> pd.DataFrame:
         # ====================================================
@@ -318,30 +315,6 @@ class StockModel:
         rescaled_predictions = self.inverse_transform(
             predictions)
 
-        '''
-        predictions = train_set[-self.steps:].reshape((-1))
-
-        for _ in range(30):
-            x = predictions[-self.steps:]
-            x = x.reshape((1, self.steps, self.features))
-            out = self.model.predict(x)[0][0]
-            predictions = np.append(predictions, out)
-        predictions = predictions[self.steps-1:]
-        # ====================================================
-        # Reshape data for presentation
-        # ====================================================
-        # Input: Timeseries shape (samples, horizon, features)
-        # Output: (samples, features) using the first horizon of every sample
-        rescaled_predictions = pd.DataFrame(predictions)
-
-        # ====================================================
-        # Print prognosis
-        # ====================================================
-        self.print_predictions(
-            predi, eval_metrics
-        )
-        '''    
-
         # ===========================================
         # Create a date range in the future
         # =========================================== 
@@ -351,7 +324,14 @@ class StockModel:
         # the first day of prediction
         index = pd.date_range(self.dataset.index[-1], periods=rescaled_predictions.shape[0]+1)[1:]
         # Apply index 
-        return rescaled_predictions.set_index(index)
+        rescaled_predictions = rescaled_predictions.set_index(index)
+        # ====================================================
+        # Print prognosis
+        # ====================================================
+        self.print_predictions(
+            rescaled_predictions
+        )
+        return rescaled_predictions
     
     def plot_metrics(self, results: any, interactive: bool, evaluation: list, data: tuple[np.array, np.array, np.array, np.array]):
         (train, valid, tests, predi) = data

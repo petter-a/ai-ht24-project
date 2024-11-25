@@ -6,7 +6,7 @@ import pandas as pd
 import argparse
 
 def main():
-    parser = argparse.ArgumentParser(prog='train')
+    parser = argparse.ArgumentParser(prog='predict.py')
     parser.add_argument("--fromcache", action="store_true", help="Use pre-processed data (if available)")
     parser.add_argument("--list", action="store_true", help="List all available symbols")
     parser.add_argument('symbols', nargs='*', default=[], help='Stock symbols to predict')
