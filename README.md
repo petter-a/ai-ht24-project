@@ -66,6 +66,14 @@ The planned deliverable for the project scope is a program that allows the user 
 from the S&P 500 index and retreive an analysis of the historical data and future predictions together with recommendations
 given predefined thresholds.
 
+# Installation
+
+To install dependencies used by Python scripts, run the command:
+
+```bash
+./install.sh
+```
+
 # Training
 
 The training module fits a stock unique model to the latest available data.
