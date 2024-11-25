@@ -39,9 +39,11 @@ class Plot:
 
     def plot_stock_prediction(self):
         prices = self.stock.get_predicted_price()
+        self.axs[0].axvline(prices.index[0])
         self.axs[0].plot(prices['Close'], color='green', label='Predicted Price', linestyle=(0,(2,2)))
 #        self.axs[0].plot(prices['SMA_high'], color='red', label='SMA 200', linestyle="dotted")
 #        self.axs[0].plot(prices['SMA_low'], color='blue', label='SMA 50', linestyle="dotted")
+        self.axs[2].axvline(prices.index[0])
         self.axs[2].bar(prices['Volume'].index, prices['Volume'], color='grey', label='Predicted Volume')
 
     def plot_max_price(self):
