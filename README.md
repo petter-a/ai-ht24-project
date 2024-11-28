@@ -74,7 +74,7 @@ If the script is run with the "interactive" flag, the statistics is also display
 This is a blocking measure and should be avoided when the script is run in a batch fashion.
 
 ```bash
-usage: train [-h] [--fromcache] [--list] [--interactive] [symbols ...]
+usage: train.py [-h] [--fromcache] [--force_tuner] [--list] [--interactive] [symbols ...]
 
 positional arguments:
   symbols        Stock symbols to build
@@ -82,6 +82,7 @@ positional arguments:
 options:
   -h, --help     show this help message and exit
   --fromcache    Use pre-processed data (if available)
+  --force_tuner  Force tuning of training parameters
   --list         List all available symbols
   --interactive  Display stats as dashboard
 ```
