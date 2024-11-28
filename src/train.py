@@ -8,6 +8,7 @@ def main():
     # ====================================================
     parser = argparse.ArgumentParser(prog='train.py')
     parser.add_argument("--fromcache", action="store_true", help="Use pre-processed data (if available)")
+    parser.add_argument("--force_tuner", action="store_true", help="Force tuning of training parameters")
     parser.add_argument("--list", action="store_true", help="List all available symbols")
     parser.add_argument("--interactive", action="store_true", help="Display stats as dashboard")
     parser.add_argument('symbols', nargs='*', default=[], help='Stock symbols to build')
@@ -46,7 +47,7 @@ def main():
         
         print(f'Training {stock.get_company_name()} ({stock.get_symbol_name()})')
         # Create and save model
-        model = StockModel(stock.get_data(), stock.get_symbol_name())
+        model = StockModel(stock.get_data(), stock.get_symbol_name(), args.force_tuner)
         model.train_model(interactive=args.interactive).save_model()
 main()
 

@@ -20,7 +20,7 @@ import keras_tuner
 @keras.saving.register_keras_serializable()
 def metric_aggregated(y_true, y_pred):
     return (
-        keras.losses.mean_squared_error(y_true, y_pred) -
+        metric_rmse(y_true, y_pred) -
         metric_r2score(y_true, y_pred))
 
 @keras.saving.register_keras_serializable()
@@ -52,17 +52,18 @@ def metric_r2score(y_true, y_pred):
 
 class StockModel:
 
-    def __init__(self, frame: pd.DataFrame, name: str):
+    def __init__(self, frame: pd.DataFrame, name: str, force_tuner=False):
         # ====================================================
         # Configuration
         # ====================================================
         self.train_size = 0.7   # The size of the training data as percentage of total datasize
         self.valid_size = 0.15  # The size of the validation data as percentage of total datasize
-        self.steps = 20         # The historically observed datapoints (days)
+        self.steps = 10         # The historically observed datapoints (days)
         self.batchsize = 24
         self.patience = 6
         self.epochs = 100       # The maximum number of epocs
         self.name = name        # The unique name of the symbol
+        self.force_tuner = force_tuner
         # ====================================================
         # Dashboard
         # ====================================================
@@ -137,13 +138,14 @@ class StockModel:
         # Create LSTM pipeline
         # ====================================================
         def build_model(hp):
-            units = hp.Int('units',  min_value=32, max_value=112, step=16)
+            units = hp.Int('units',  min_value=48, max_value=112, step=16)
             learning_rate = hp.Float("learning_rate", min_value=1e-4, max_value=1e-2, sampling="log")
             
             model = Sequential([
                 Input(shape=(self.steps, self.features)),
-                LSTM(units, activation='relu'),
-                Dense(self.features)
+                LSTM(units, activation='relu', return_sequences=True),
+                LSTM(units),
+                Dense(self.features, activation="linear")
             ])
             # ====================================================
             # Compile model
@@ -167,7 +169,7 @@ class StockModel:
             build_model,
             tune_new_entries=True,
             objective='val_loss',
-            overwrite=False,
+            overwrite=self.force_tuner,
             directory=config.tuner_path,
             project_name=self.name
         )
