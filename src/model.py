@@ -99,7 +99,7 @@ class StockModel:
             'SMA_low', 'SMA_high',
             'EMA_low', 'EMA_high',
             'DEMA_val', 'ROCR_val',
-            'HURST_val'
+            'RSI_val', 'HURST_val'
             ]]
         
         self.features = len(self.dataset.columns)

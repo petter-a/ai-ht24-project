@@ -46,10 +46,15 @@ class Plot:
         self.axs[0].text(prices.index[0], top - ((top - bottom)/2), 'Future', rotation=90, verticalalignment='center')
         self.axs[0].plot(prices['SMA_high'], color='red', label='SMA 200', linestyle="dotted", alpha=0.3)
         self.axs[0].plot(prices['SMA_low'], color='blue', label='SMA 50', linestyle="dotted", alpha=0.3)
+        self.axs[1].axvline(prices.index[0])
+        self.axs[1].plot(prices['RSI_val'], color='blue', label='RSI')
+        (bottom, top) = self.axs[1].get_ylim()
+        self.axs[1].text(prices.index[0], top - ((top - bottom)/2), 'Future', rotation=90, verticalalignment='center')
         self.axs[2].axvline(prices.index[0])
         self.axs[2].bar(prices.index, prices['Volume'], color='grey', label='Predicted Volume')
         (bottom, top) = self.axs[2].get_ylim()
         self.axs[2].text(prices.index[0], top - ((top - bottom)/2), 'Future', rotation=90, verticalalignment='center')
+
 
     def plot_max_price(self):
         prices = self.stock.get_price(self.range)
