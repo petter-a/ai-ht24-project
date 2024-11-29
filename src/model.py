@@ -52,7 +52,7 @@ def metric_r2score(y_true, y_pred):
 
 class StockModel:
 
-    def __init__(self, frame: pd.DataFrame, name: str, force_tuner=False):
+    def __init__(self, frame: pd.DataFrame, name: str):
         # ====================================================
         # Configuration
         # ====================================================
@@ -63,7 +63,6 @@ class StockModel:
         self.patience = 6
         self.epochs = 100       # The maximum number of epocs
         self.name = name        # The unique name of the symbol
-        self.force_tuner = force_tuner
         # ====================================================
         # Dashboard
         # ====================================================
@@ -99,12 +98,13 @@ class StockModel:
             'SMA_low', 'SMA_high',
             'EMA_low', 'EMA_high',
             'DEMA_val', 'ROCR_val',
-            'RSI_val', 'HURST_val'
+            'RSI_val', 'HURST_val',
+            'S&P500'
             ]]
         
         self.features = len(self.dataset.columns)
         
-    def train_model(self, interactive: bool = True) -> Self:   
+    def train_model(self, interactive: bool = True, force_tuner=False) -> Self:
         # ====================================================
         # Fit the transform to training data
         # ====================================================
@@ -169,7 +169,7 @@ class StockModel:
             build_model,
             tune_new_entries=True,
             objective='val_loss',
-            overwrite=self.force_tuner,
+            overwrite=force_tuner,
             directory=config.tuner_path,
             project_name=self.name
         )
@@ -301,7 +301,7 @@ class StockModel:
         # Scale data
         # ====================================================
         scaled_dataset = self.scaler.fit_transform(self.dataset)
-    
+
         predictions = scaled_dataset[-self.steps:]
 
         for _ in range(days):
@@ -326,7 +326,7 @@ class StockModel:
         # the original dataset closely.
         # Using the last day in the dataset +1 to be
         # the first day of prediction
-        index = pd.date_range(self.dataset.index[-1], periods=rescaled_predictions.shape[0]+1)[1:]
+        index = pd.date_range(self.dataset.index[-1], periods=rescaled_predictions.shape[0])
         # Apply index 
         rescaled_predictions = rescaled_predictions.set_index(index)
         # ====================================================

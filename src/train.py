@@ -47,7 +47,7 @@ def main():
         
         print(f'Training {stock.get_company_name()} ({stock.get_symbol_name()})')
         # Create and save model
-        model = StockModel(stock.get_data(), stock.get_symbol_name(), args.force_tuner)
-        model.train_model(interactive=args.interactive).save_model()
+        model = StockModel(stock.get_data(), stock.get_symbol_name())
+        model.train_model(interactive=args.interactive, force_tuner=args.force_tuner).save_model()
 main()
 

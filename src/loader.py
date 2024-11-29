@@ -99,6 +99,7 @@ class Loader:
         # Make sure data is sorted by Date
         # =========================================== 
         data = data.sort_values(by=['Symbol', 'Date']).dropna()
+
         # ===========================================
         # Create the technical indicators
         # =========================================== 
@@ -128,7 +129,12 @@ class Loader:
         data['HURST_val'] = close.transform(
             lambda x: indicators.calculate_HURST(x.values, 50))
 
-        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val', 'DEMA_val', 'ROCR_val', 'HURST_val']:
+        # ===========================================
+        # Add reference index values
+        # ===========================================
+        data = pd.merge(data, self.index, left_index=True, right_index=True, how='left')
+
+        for column in ['SMA_low', 'SMA_high', 'EMA_low', 'EMA_high', 'RSI_val', 'DEMA_val', 'ROCR_val', 'HURST_val', 'S&P500']:
             # First rows will always be Nan and needs to be
             # backfilled otherwise training will generate Nan metrics
             # In cases where backfill cannot take place (A column with only NaN)
