@@ -59,7 +59,7 @@ Mainly, events that are unforseen or historically volatile stocks simply cannot 
 
 A perfectly fitted model during training or validation will not guarantee an accurate prediction.
 
-The use of different types of layers/networks does not improve the predictions significantly (I've tried to add additional convolutional layers (i.e Conv2d), normalization layers (i.e Batch normalization), regularisation layers (i.e DropOut) and attention layers, but it doesnt seem to improve the results).
+The use of different types of layers/networks does not improve the predictions significantly (I've tried to add additional convolutional layers (i.e Conv2d), normalization layers (i.e Batch normalization), regularisation layers (i.e DropOut), recurrent layers (i.e TimeDistributed) and attention layers, but neither seem to improve the results).
 
 Measuring the best model configuration is quite difficult since training of different stocks gives metrics of different results (Perfect metrics on one stock may give questionable metrics on another).
 
