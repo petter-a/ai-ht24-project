@@ -53,9 +53,6 @@ are the most efficient; hence common defaults are used here.
 - HURST 50 (Hurst exponent and fractal dimension)
 - S&P500 index (The complete index)
 
-Initially based on a single feature (Closing price) but eventually more features like volume and volatility. or other external data
-that I can find that might strengthen the prognosis.
-
 # Challenges
 
 The main challenge is to interpret and define thresholds for all parameters involved in the process.
