@@ -27,7 +27,32 @@ Two additional auxiliary datasets are used to provide detailed company informati
 
 # Method
 
-Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained quite frequently.
+Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained frequently (preferably on a daily basis).
+
+The prediction is based on multiple fields and technical indicators.
+
+Fields:
+
+- Close Price
+- Open Price
+- Volume
+- High (The highest price during a )
+- Low
+
+Indicators:
+Each indicator is calculated on various time windows. There are no simple truth which values
+are the most efficient; hence common defaults are used here.
+
+- SMA 50 (Short Simple Moving Average)
+- SMA 200 (Long Simple Moving Average)
+- EMA 12 (Short Exponential Moving Average)
+- EMA 36 (Long Exponential Moving Average)
+- DEMA 14 (Double Exponential Moving Average)
+- ROCR 5 (Rate of Change Ratio)
+- RSI 14 (Relative strength index)
+- HURST 50 (Hurst exponent and fractal dimension)
+- S&P500 index (The complete index)
+
 Initially based on a single feature (Closing price) but eventually more features like volume and volatility. or other external data
 that I can find that might strengthen the prognosis.
 
