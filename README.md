@@ -27,7 +27,7 @@ Two additional auxiliary datasets are used to provide detailed company informati
 
 # Method
 
-Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model needs to be retrained frequently (preferably on a daily basis).
+Prediction is carried out using the LSTM (Long Short-Term Memory) neural network model, which is a preferred method for time series forecasting. Due to the volatility of the stock market, the model(s) needs to be retrained frequently (preferably on a daily basis).
 
 The prediction is based on multiple fields and technical indicators.
 
@@ -40,8 +40,7 @@ Fields:
 - Low
 
 Indicators:
-Each indicator is calculated on various time windows. There are no simple truth which values
-are the most efficient; hence common defaults are used here.
+Each indicator is calculated using different time windows. Common defaults are used here.
 
 - SMA 50 (Short Simple Moving Average)
 - SMA 200 (Long Simple Moving Average)
@@ -55,12 +54,14 @@ are the most efficient; hence common defaults are used here.
 
 # Challenges
 
-The main challenge is to interpret and define thresholds for all parameters involved in the process.
-For example what constitutes a "buy signal"? How to combine technical analysis (which in nature is statistical)
-with predictions based on machine learning and what conclusions could one draw from it?
-It is also a challenge to collect datasets with aligning time series in a consistent manner.
-In the long run, various API's and static downloads needs to be combined using adapters to produce intermediate
-datasets that can be combined efficiently.
+There are a number of challenges connected to finding the best predictability of a stock.
+Mainly, events that are unforseen or historically volatile stocks simply cannot be predicted with any confidence (i.e NVIDIA). Therefor, to get the most accurate predictions it will require a stock to be relatively stable over time.
+
+A perfectly fitted model during training or validation will not guarantee an accurate prediction.
+
+The use of different types of layers/networks does not improve the predictions significantly (I've tried to add additional convolutional layers (i.e Conv2d), normalization layers (i.e Batch normalization), regularisation layers (i.e DropOut) and attention layers, but it doesnt seem to improve the results).
+
+Measuring the best model configuration is quite difficult since training of different stocks gives metrics of different results (Perfect metrics on one stock may give questionable metrics on another).
 
 # Scope of project
 
