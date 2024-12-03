@@ -36,7 +36,7 @@ Fields:
 - Close Price
 - Open Price
 - Volume
-- High (The highest price during a )
+- High
 - Low
 
 Indicators:
