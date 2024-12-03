@@ -62,12 +62,10 @@ It is also a challenge to collect datasets with aligning time series in a consis
 In the long run, various API's and static downloads needs to be combined using adapters to produce intermediate
 datasets that can be combined efficiently.
 
-These challenges will be adressed during the implementation phase.
-
 # Scope of project
 
-The planned deliverable for the project scope is a program that allows the user to choose a particular stock
-from the S&P 500 index and retreive an analysis of the historical data and future predictions.
+The planned deliverable for the project scope is a program that allows the user to choose a particular stock from the S&P 500 index and display historical data and future predictions based
+on the same.
 
 # Installation
 
