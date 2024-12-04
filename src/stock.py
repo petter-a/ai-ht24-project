@@ -10,6 +10,9 @@ class Stock:
         self.company = company
         self.data = data
 
+    def has_data(self) -> bool:
+        return not self.data.empty
+
     def get_company_name(self) -> str:
         return to_str(self.company, 'Shortname')
     
@@ -58,6 +61,9 @@ class Stock:
 
     def get_rsi_val(self, range: DateRange = None) -> pd.Series:
         return self.get_data_range(self.data['RSI_val'], range)
+
+    def get_hurst_val(self, range: DateRange = None) -> pd.Series:
+        return self.get_data_range(self.data['HURST_val'], range)
 
     def get_closing_date(self) -> pd.Timestamp:
         return max(self.data.index)

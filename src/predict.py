@@ -46,6 +46,10 @@ def main():
 
         stock = loader.get_stock(symbol)        
         
+        if not stock.has_data():
+            print(f'Data for stock symbol {stock.get_symbol_name()} is missing')
+            continue
+
         # Plot prediction
         Plot(stock, (three_months_ago, None)).draw()
 main()

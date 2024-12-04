@@ -45,6 +45,10 @@ def main():
 
         stock = loader.get_stock(symbol)        
         
+        if not stock.has_data():
+            print(f'Data for stock symbol {stock.get_symbol_name()} is missing')
+            continue
+
         print(f'Training {stock.get_company_name()} ({stock.get_symbol_name()})')
         # Create and save model
         model = StockModel(stock.get_data(), stock.get_symbol_name())
