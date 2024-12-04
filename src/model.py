@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import os
 import keras 
 import joblib
 import config
@@ -296,7 +297,7 @@ class StockModel:
             data
         }')
 
-    def predict(self, days: int = 30) -> pd.DataFrame:
+    def predict(self, days: int = 14) -> pd.DataFrame:
         # ====================================================
         # Scale data
         # ====================================================
@@ -400,6 +401,15 @@ class StockModel:
         return self
 
     def save_model(self, path: str = config.model_path) -> Self:
+        # ====================================================
+        # Create output directory
+        # ====================================================
+        if not (os.path.exists(path) and os.path.isdir(path)):
+            os.mkdir(path)
+
+        # ====================================================
+        # Save Model
+        # ====================================================
         if self.model != None:
             self.model.save(f'{path}/{self.name}.keras')
             joblib.dump(self.scaler, f'{path}/{self.name}.save')
